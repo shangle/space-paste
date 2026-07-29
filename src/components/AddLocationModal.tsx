@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, QrCode, Camera, MapPin, Sparkles, Check } from 'lucide-react';
 import type { PhysicalLocation, GeoCoords } from '../types';
 import { getCurrentPosition } from '../services/geo';
@@ -10,14 +10,14 @@ interface AddLocationModalProps {
   onSave: (location: PhysicalLocation) => void;
 }
 
-const EMOJI_OPTIONS = ['💻', '🪑', '🧰', '☕', '📦', '🛏️', '📚', '🚗', '🔑', '🪴', '🧊', '🎨'];
-const COLOR_OPTIONS = ['#4F46E5', '#D97706', '#059669', '#DC2626', '#2563EB', '#7C3AED', '#DB2777', '#4B5563'];
+const EMOJI_OPTIONS = ['🚗', '💻', '🪑', '🧰', '☕', '📦', '🛏️', '📚', '🔑', '🪴', '🧊', '🎨'];
+const COLOR_OPTIONS = ['#F28C38', '#00ACC1', '#E53935', '#FDD835', '#5D4037', '#8E24AA', '#009688', '#3F51B5'];
 
 export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onSave }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('💻');
-  const [color, setColor] = useState('#4F46E5');
+  const [icon, setIcon] = useState('🚗');
+  const [color, setColor] = useState('#F28C38');
   const [mode, setMode] = useState<'qr' | 'photo'>('qr');
   
   const [coords, setCoords] = useState<GeoCoords | null>(null);
@@ -26,37 +26,61 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
   // Photo Signature Capture state
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [photoSnapshot, setPhotoSnapshot] = useState<string | null>(null);
   const [photoSig, setPhotoSig] = useState<any>(null);
 
-  const handleStartCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setCameraActive(true);
+  // Camera initialization hook when cameraActive becomes true
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+
+    if (cameraActive) {
+      async function startCamera() {
+        setCameraError(null);
+        try {
+          // Attempt camera with preferred environment facing mode
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+          });
+        } catch {
+          // Fallback to standard video camera for webcams / laptops
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          } catch (err: any) {
+            console.error('Camera error:', err);
+            setCameraError(`Camera error: ${err.message || 'Access denied'}.`);
+            setCameraActive(false);
+            return;
+          }
+        }
+
+        if (videoRef.current && stream) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
       }
-    } catch {
-      alert('Camera access failed. Check permissions.');
+
+      startCamera();
     }
-  };
 
-  const handleSnapPhoto = () => {
-    if (videoRef.current) {
-      const { signature, snapshotUrl } = extractPhotoSignature(videoRef.current);
-      setPhotoSig(signature);
-      setPhotoSnapshot(snapshotUrl);
-
-      // Stop camera stream after snap
-      const stream = videoRef.current.srcObject as MediaStream;
+    return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-      setCameraActive(false);
-      sound.playStashItem();
+    };
+  }, [cameraActive]);
+
+  const handleSnapPhoto = () => {
+    if (videoRef.current) {
+      try {
+        const { signature, snapshotUrl } = extractPhotoSignature(videoRef.current);
+        setPhotoSig(signature);
+        setPhotoSnapshot(snapshotUrl);
+        setCameraActive(false);
+        sound.playStashItem();
+      } catch (err: any) {
+        alert(`Failed to capture photo signature: ${err.message}`);
+      }
     }
   };
 
@@ -76,8 +100,8 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
     e.preventDefault();
     if (!name.trim()) return;
 
-    const id = `loc_${Date.now()}`;
-    const code = `sta.sh/${id}`;
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') || `loc_${Date.now()}`;
+    const code = `spacepaste.app/${id}`;
     const now = new Date().toISOString();
 
     const newLoc: PhysicalLocation = {
@@ -106,8 +130,8 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div>
             <h2 style={{ fontSize: '1.4rem' }}>Add New Physical Location</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-              Create a stash for your desk, toolbox, pantry, or coffee table
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+              Create a stash for your car, work desk, workshop, or coffee bar
             </p>
           </div>
           <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
@@ -119,7 +143,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
           
           {/* Recognition Type Selection */}
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
               Recognition Method:
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -128,8 +152,8 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                 style={{
                   padding: '14px',
                   borderRadius: '12px',
-                  border: mode === 'qr' ? 'var(--border-thick)' : '1.5px solid #E2DCD2',
-                  backgroundColor: mode === 'qr' ? '#EBF5FF' : 'var(--bg-card)',
+                  border: mode === 'qr' ? 'var(--border-thick)' : '1.5px solid #D7CCC8',
+                  backgroundColor: mode === 'qr' ? '#E0F7FA' : 'var(--bg-card)',
                   boxShadow: mode === 'qr' ? 'var(--shadow-tactile-sm)' : 'none',
                   cursor: 'pointer',
                   display: 'flex',
@@ -137,9 +161,9 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                   gap: '10px',
                 }}
               >
-                <QrCode size={24} color="var(--accent-navy)" />
+                <QrCode size={24} color="var(--color-astro-turquoise)" />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>QR Sticker Code</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>QR Code / URL</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Print/scan a QR label</div>
                 </div>
               </div>
@@ -149,8 +173,8 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                 style={{
                   padding: '14px',
                   borderRadius: '12px',
-                  border: mode === 'photo' ? 'var(--border-thick)' : '1.5px solid #E2DCD2',
-                  backgroundColor: mode === 'photo' ? '#FFF3E0' : 'var(--bg-card)',
+                  border: mode === 'photo' ? 'var(--border-thick)' : '1.5px solid #D7CCC8',
+                  backgroundColor: mode === 'photo' ? '#FBE9E7' : 'var(--bg-card)',
                   boxShadow: mode === 'photo' ? 'var(--shadow-tactile-sm)' : 'none',
                   cursor: 'pointer',
                   display: 'flex',
@@ -158,9 +182,9 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                   gap: '10px',
                 }}
               >
-                <Camera size={24} color="var(--accent-terracotta)" />
+                <Camera size={24} color="var(--color-orbit-orange)" />
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Photo Signature</div>
+                  <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>Photo Signature</div>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Snap desk/spot photo</div>
                 </div>
               </div>
@@ -169,19 +193,20 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
 
           {/* Photo Snap Capture Box if Photo Mode */}
           {mode === 'photo' && (
-            <div style={{ marginBottom: '18px', padding: '14px', backgroundColor: 'var(--bg-subtle)', borderRadius: '12px', border: '1.5px solid #1F2421' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+            <div style={{ marginBottom: '18px', padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)' }}>
+              <label style={{ fontSize: '0.88rem', fontWeight: 800, marginBottom: '8px', display: 'block' }}>
                 Desk/Spot Visual Snapshot:
               </label>
 
               {photoSnapshot ? (
-                <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid #1F2421' }}>
-                  <img src={photoSnapshot} alt="Snapshot" style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '1.5px solid #5D4037' }}>
+                  <img src={photoSnapshot} alt="Snapshot" style={{ width: '100%', height: '150px', objectFit: 'cover' }} />
                   <button
                     type="button"
                     onClick={() => {
                       setPhotoSnapshot(null);
                       setPhotoSig(null);
+                      setCameraActive(true);
                     }}
                     className="btn btn-sm"
                     style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: '#FFFFFF' }}
@@ -192,15 +217,32 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
               ) : (
                 <div>
                   {!cameraActive ? (
-                    <button type="button" onClick={handleStartCamera} className="btn btn-accent" style={{ width: '100%' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCameraActive(true)}
+                      className="btn btn-accent"
+                      style={{ width: '100%', padding: '12px' }}
+                    >
                       <Camera size={18} /> Open Camera to Snap Spot
                     </button>
                   ) : (
                     <div>
-                      <video ref={videoRef} playsInline muted style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '10px', border: '1.5px solid #1F2421' }} />
-                      <button type="button" onClick={handleSnapPhoto} className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }}>
+                      <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '2px solid #5D4037', backgroundColor: '#000000' }}>
+                        <video ref={videoRef} playsInline muted style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSnapPhoto}
+                        className="btn btn-primary"
+                        style={{ width: '100%', marginTop: '10px', padding: '12px' }}
+                      >
                         📸 Snap Visual Signature
                       </button>
+                    </div>
+                  )}
+                  {cameraError && (
+                    <div style={{ marginTop: '8px', fontSize: '0.82rem', color: '#E53935', fontWeight: 700 }}>
+                      {cameraError}
                     </div>
                   )}
                 </div>
@@ -210,13 +252,13 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
 
           {/* Name & Description Inputs */}
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '4px' }}>
               Location Name *
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Work Desk, Workshop Drawer B, Coffee Station"
+              placeholder="e.g. Car Stash, Work Desk, Workshop Drawer B"
               value={name}
               onChange={(e) => setName(e.target.value)}
               style={{
@@ -231,12 +273,12 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
           </div>
 
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '4px' }}>
               Description / Specific Spot
             </label>
             <input
               type="text"
-              placeholder="e.g. Under monitor riser, left compartment"
+              placeholder="e.g. Glove box & trunk side pocket"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               style={{
@@ -253,7 +295,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
           {/* Geolocation Tagging */}
           <div style={{ marginBottom: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 800 }}>
                 GPS Tagging (For Proximity Sorting)
               </label>
               <button
@@ -262,12 +304,12 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                 className="btn btn-sm"
                 disabled={fetchingGeo}
               >
-                <MapPin size={14} color="var(--accent-sage)" />
+                <MapPin size={14} color="var(--color-astro-turquoise)" />
                 <span>{fetchingGeo ? 'Tagging...' : coords ? 'Re-tag GPS' : 'Tag Current GPS'}</span>
               </button>
             </div>
             {coords && (
-              <div style={{ fontSize: '0.8rem', color: '#2E7D32', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '0.8rem', color: '#047857', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Check size={14} /> GPS Tagged ({coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)})
               </div>
             )}
@@ -276,7 +318,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
           {/* Icon & Color Pickers */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
             <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '6px' }}>
                 Icon Badge
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -290,7 +332,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                       width: '36px',
                       height: '36px',
                       borderRadius: '8px',
-                      border: icon === e ? '2px solid #1F2421' : '1px solid #E2DCD2',
+                      border: icon === e ? '2.5px solid #5D4037' : '1px solid #D7CCC8',
                       backgroundColor: icon === e ? 'var(--bg-subtle)' : '#FFFFFF',
                       cursor: 'pointer',
                     }}
@@ -302,7 +344,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
             </div>
 
             <div>
-              <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '6px' }}>
                 Theme Color
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -316,7 +358,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({ onClose, onS
                       height: '32px',
                       borderRadius: '50%',
                       backgroundColor: c,
-                      border: color === c ? '3px solid #1F2421' : '1px solid #FFFFFF',
+                      border: color === c ? '3px solid #5D4037' : '1.5px solid #FFFFFF',
                       cursor: 'pointer',
                     }}
                   />

@@ -7,6 +7,12 @@ interface MerchDropModalProps {
   onClose: () => void;
 }
 
+interface StoredAttempt {
+  timestamp: string;
+  message: string;
+  status: 'QUALIFIED' | 'DENIED';
+}
+
 const GMAIL_PHRASES = [
   'DENIED: Your inbox contains 14,291 unread newsletters. Kosmonaut protocol requires clean inbox karma.',
   'QUALIFIED: Gmail power user detected! Priority access granted to the Orbit Orange sticker pack.',
@@ -42,11 +48,21 @@ const RANDOM_VIRAL_PHRASES = [
   'QUALIFIED: Cosmic resonance test passed with flying colors! Merch drop notification locked in.',
 ];
 
+function formatTimeAgo(isoTimestamp: string): string {
+  const diffSec = Math.floor((Date.now() - new Date(isoTimestamp).getTime()) / 1000);
+  if (diffSec < 10) return 'just a few seconds ago';
+  if (diffSec < 60) return `${diffSec} seconds ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  return `${diffHr} hour${diffHr === 1 ? '' : 's'} ago`;
+}
+
 export const MerchDropModal: React.FC<MerchDropModalProps> = ({ onClose }) => {
   const [email, setEmail] = useState('');
   const [checking, setChecking] = useState(false);
   const [stepMsg, setStepMsg] = useState('Initializing Kosmonaut scanner...');
-  const [result, setResult] = useState<{ status: 'QUALIFIED' | 'DENIED'; message: string } | null>(null);
+  const [result, setResult] = useState<{ status: 'QUALIFIED' | 'DENIED'; message: string; isRepeat?: boolean } | null>(null);
 
   const handleCheckQualification = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,39 +87,78 @@ export const MerchDropModal: React.FC<MerchDropModalProps> = ({ onClose }) => {
         clearInterval(interval);
         finalizeResult();
       }
-    }, 600);
+    }, 550);
   };
 
   const finalizeResult = () => {
     setChecking(false);
-    const domain = email.toLowerCase().split('@')[1] || '';
-    let selectedMsg = '';
+    const cleanEmail = email.trim().toLowerCase();
+    const domain = cleanEmail.split('@')[1] || '';
 
-    if (domain.includes('gmail')) {
-      selectedMsg = GMAIL_PHRASES[Math.floor(Math.random() * GMAIL_PHRASES.length)];
-    } else if (domain.includes('yahoo') || domain.includes('aol') || domain.includes('hotmail')) {
-      selectedMsg = RETRO_PHRASES[Math.floor(Math.random() * RETRO_PHRASES.length)];
-    } else if (domain.includes('apple') || domain.includes('icloud') || domain.includes('me.com')) {
-      selectedMsg = APPLE_PHRASES[Math.floor(Math.random() * APPLE_PHRASES.length)];
-    } else if (domain.includes('.edu')) {
-      selectedMsg = EDU_PHRASES[Math.floor(Math.random() * EDU_PHRASES.length)];
-    } else {
-      selectedMsg = RANDOM_VIRAL_PHRASES[Math.floor(Math.random() * RANDOM_VIRAL_PHRASES.length)];
-    }
-
-    const isQualified = selectedMsg.startsWith('QUALIFIED');
-    const outcome = { status: isQualified ? ('QUALIFIED' as const) : ('DENIED' as const), message: selectedMsg };
-    setResult(outcome);
-
+    // Load previous attempts for this email
+    let signupRecords: Record<string, StoredAttempt[]> = {};
     try {
-      const existingLogs = JSON.parse(localStorage.getItem('spacepaste_merch_signups') || '[]');
-      existingLogs.push({ email: email.trim(), outcome, timestamp: new Date().toISOString() });
-      localStorage.setItem('spacepaste_merch_signups', JSON.stringify(existingLogs));
+      signupRecords = JSON.parse(localStorage.getItem('spacepaste_merch_signups') || '{}');
     } catch {
-      // Storage fallback
+      signupRecords = {};
     }
 
-    if (isQualified) {
+    const previousAttempts = signupRecords[cleanEmail] || [];
+    const attemptCount = previousAttempts.length;
+
+    let selectedMsg = '';
+    let isQualified = false;
+    let isRepeat = false;
+
+    if (attemptCount > 0) {
+      isRepeat = true;
+      const lastAttempt = previousAttempts[previousAttempts.length - 1];
+      const timeAgoStr = formatTimeAgo(lastAttempt.timestamp);
+
+      if (attemptCount === 1) {
+        selectedMsg = `⚠️ You already checked '${cleanEmail}' ${timeAgoStr}! Outcome: ${lastAttempt.message}`;
+        isQualified = lastAttempt.status === 'QUALIFIED';
+      } else if (attemptCount === 2) {
+        const firstTimeAgo = formatTimeAgo(previousAttempts[0].timestamp);
+        selectedMsg = `🤨 Seriously? You've checked '${cleanEmail}' twice already (${firstTimeAgo} & ${timeAgoStr}). Cosmic physics hasn't changed.`;
+        isQualified = false;
+      } else if (attemptCount === 3) {
+        selectedMsg = `😮‍💨 *Exhausted Kosmonaut AI sigh*... Attempt #4 for '${cleanEmail}'. Repetitive tapping will not alter your solar flare status!`;
+        isQualified = false;
+      } else {
+        selectedMsg = `🧊 DEEP CRYO-SLEEP LOCKOUT: Attempt #${attemptCount + 1} for '${cleanEmail}'. This email is frozen in stasis until the year 2126.`;
+        isQualified = false;
+      }
+    } else {
+      // First time checking this email
+      if (domain.includes('gmail')) {
+        selectedMsg = GMAIL_PHRASES[Math.floor(Math.random() * GMAIL_PHRASES.length)];
+      } else if (domain.includes('yahoo') || domain.includes('aol') || domain.includes('hotmail')) {
+        selectedMsg = RETRO_PHRASES[Math.floor(Math.random() * RETRO_PHRASES.length)];
+      } else if (domain.includes('apple') || domain.includes('icloud') || domain.includes('me.com')) {
+        selectedMsg = APPLE_PHRASES[Math.floor(Math.random() * APPLE_PHRASES.length)];
+      } else if (domain.includes('.edu')) {
+        selectedMsg = EDU_PHRASES[Math.floor(Math.random() * EDU_PHRASES.length)];
+      } else {
+        selectedMsg = RANDOM_VIRAL_PHRASES[Math.floor(Math.random() * RANDOM_VIRAL_PHRASES.length)];
+      }
+      isQualified = selectedMsg.startsWith('QUALIFIED');
+    }
+
+    const outcomeStatus = isQualified ? 'QUALIFIED' : 'DENIED';
+
+    // Save attempt to local storage
+    const newAttempt: StoredAttempt = {
+      timestamp: new Date().toISOString(),
+      message: selectedMsg,
+      status: outcomeStatus,
+    };
+    signupRecords[cleanEmail] = [...previousAttempts, newAttempt];
+    localStorage.setItem('spacepaste_merch_signups', JSON.stringify(signupRecords));
+
+    setResult({ status: outcomeStatus, message: selectedMsg, isRepeat });
+
+    if (isQualified && !isRepeat) {
       sound.playScanSuccess();
       confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
     } else {
@@ -210,7 +265,7 @@ export const MerchDropModal: React.FC<MerchDropModalProps> = ({ onClose }) => {
                     color: '#FFFFFF',
                   }}
                 >
-                  {result.status}
+                  {result.status} {result.isRepeat ? '(RETRY DETECTED)' : ''}
                 </span>
                 <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: '1.4' }}>
                   {result.message}

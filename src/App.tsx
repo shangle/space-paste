@@ -20,6 +20,7 @@ export const App: React.FC = () => {
   const [locations, setLocations] = useState<PhysicalLocation[]>([]);
   const [currentCoords, setCurrentCoords] = useState<GeoCoords | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'home' | 'stashes'>('stashes');
 
   // Modal active states
   const [showScanner, setShowScanner] = useState(false);
@@ -52,7 +53,10 @@ export const App: React.FC = () => {
 
         if (matched) {
           setSelectedLocation(matched);
+          setActiveView('stashes');
         }
+      } else if (list.length === 0) {
+        setActiveView('home');
       }
 
       setLocations(sortLocationsByProximity(list, null));
@@ -69,6 +73,7 @@ export const App: React.FC = () => {
   const handleStartDemo = async () => {
     await seedDemoDataIfEmpty();
     await loadLocations();
+    setActiveView('stashes');
   };
 
   const fetchGPSPosition = async () => {
@@ -93,6 +98,7 @@ export const App: React.FC = () => {
     setShowAddLocation(false);
     await loadLocations();
     setSelectedLocation(newLoc);
+    setActiveView('stashes');
   };
 
   const handleDeleteLocation = async (id: string) => {
@@ -110,12 +116,16 @@ export const App: React.FC = () => {
         onOpenScanner={() => setShowScanner(true)}
         onOpenAddLocation={() => setShowAddLocation(true)}
         onOpenBackup={() => setShowBackup(true)}
+        onGoHome={() => setActiveView('home')}
+        onGoStashes={() => setActiveView('stashes')}
+        activeView={activeView}
+        stashesCount={locations.length}
         currentCoords={currentCoords}
         geoError={geoError}
         onRefreshGeo={fetchGPSPosition}
       />
 
-      {/* Top Banner Bar for Merch & Docs */}
+      {/* Quick Merch & Docs Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
@@ -129,16 +139,16 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        {locations.length > 0 && (
-          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Physical Stashes: {locations.length}
+        {activeView === 'stashes' && (
+          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            Physical Stashes ({locations.length})
           </div>
         )}
       </div>
 
-      {/* Main Content Area */}
+      {/* Main View Area */}
       <main>
-        {locations.length === 0 ? (
+        {activeView === 'home' || locations.length === 0 ? (
           <LandingPage
             onStartDemo={handleStartDemo}
             onOpenAddLocation={() => setShowAddLocation(true)}
@@ -169,6 +179,7 @@ export const App: React.FC = () => {
           onSelectLocation={(loc) => {
             setShowScanner(false);
             setSelectedLocation(loc);
+            setActiveView('stashes');
           }}
         />
       )}
@@ -205,6 +216,7 @@ export const App: React.FC = () => {
             if (loc) {
               setShareLocation(null);
               setSelectedLocation(loc);
+              setActiveView('stashes');
             }
           }}
         />
