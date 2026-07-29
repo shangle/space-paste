@@ -1,0 +1,250 @@
+import React, { useState } from 'react';
+import { X, Sparkles, CheckCircle2, AlertCircle, ShoppingBag, RefreshCw } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { sound } from '../services/sound';
+
+interface MerchDropModalProps {
+  onClose: () => void;
+}
+
+const GMAIL_PHRASES = [
+  'DENIED: Your inbox contains 14,291 unread newsletters. Kosmonaut protocol requires clean inbox karma.',
+  'QUALIFIED: Gmail power user detected! Priority access granted to the Orbit Orange sticker pack.',
+  'DENIED: Google Drive storage is at 99.4%. Clear your spam folder to align cosmic frequency.',
+];
+
+const RETRO_PHRASES = [
+  'DENIED: You are using a temporal time vortex email from 1999. Please return to 2026 to qualify.',
+  'QUALIFIED: Retro legend status! Dial-up modem sounds detected. Cosmic Patch reserved.',
+  'DENIED: You’ve got mail! ...But unfortunately no merch qualification today.',
+];
+
+const APPLE_PHRASES = [
+  'QUALIFIED: Your device emitted pure titanium cosmic vibrations. Priority Kosmonaut badge reserved!',
+  'DENIED: iCloud storage full. Backup your photos before entering deep space.',
+];
+
+const EDU_PHRASES = [
+  'DENIED: Campus dining hall microwave radiation interfered with your Kosmonaut telemetry signal.',
+  'QUALIFIED: Student Kosmonaut discount code generated! Check back during finals week.',
+];
+
+const RANDOM_VIRAL_PHRASES = [
+  'DENIED: Our AI detected you put pineapple on pizza. Disqualified by Kosmonaut Protocol 7.',
+  'QUALIFIED: Your email matched the golden cosmic ratio of Jupiter’s third moon! Patch granted.',
+  'DENIED: Your astrological moon sign collided with Mercury in retrograde. Try again in 48 hours.',
+  'QUALIFIED: Solar flare alignment passed with 99.8% precision! Free holographic sticker reserved.',
+  'DENIED: You tapped the button with your left thumb instead of your right index finger.',
+  'QUALIFIED: Telepathic signal received! You are Kosmonaut #4,209 in line for the NFC metal tag drop.',
+  'DENIED: Too much cosmic static in your area. Walk 3 steps to the left and retry.',
+  'QUALIFIED: High-gravity orbital pass confirmed. Welcome to the Space Paste Crew!',
+  'DENIED: You haven’t drank enough water today. Hydrate to qualify for deep space travel.',
+  'QUALIFIED: Cosmic resonance test passed with flying colors! Merch drop notification locked in.',
+];
+
+export const MerchDropModal: React.FC<MerchDropModalProps> = ({ onClose }) => {
+  const [email, setEmail] = useState('');
+  const [checking, setChecking] = useState(false);
+  const [stepMsg, setStepMsg] = useState('Initializing Kosmonaut scanner...');
+  const [result, setResult] = useState<{ status: 'QUALIFIED' | 'DENIED'; message: string } | null>(null);
+
+  const handleCheckQualification = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || checking) return;
+
+    setChecking(true);
+    setResult(null);
+
+    const steps = [
+      'Scanning email domain frequency...',
+      'Analyzing orbital inbox karma...',
+      'Checking solar flare alignment...',
+      'Verifying Kosmonaut resonance...',
+    ];
+
+    let stepIdx = 0;
+    const interval = setInterval(() => {
+      if (stepIdx < steps.length) {
+        setStepMsg(steps[stepIdx]);
+        stepIdx++;
+      } else {
+        clearInterval(interval);
+        finalizeResult();
+      }
+    }, 600);
+  };
+
+  const finalizeResult = () => {
+    setChecking(false);
+    const domain = email.toLowerCase().split('@')[1] || '';
+    let selectedMsg = '';
+
+    if (domain.includes('gmail')) {
+      selectedMsg = GMAIL_PHRASES[Math.floor(Math.random() * GMAIL_PHRASES.length)];
+    } else if (domain.includes('yahoo') || domain.includes('aol') || domain.includes('hotmail')) {
+      selectedMsg = RETRO_PHRASES[Math.floor(Math.random() * RETRO_PHRASES.length)];
+    } else if (domain.includes('apple') || domain.includes('icloud') || domain.includes('me.com')) {
+      selectedMsg = APPLE_PHRASES[Math.floor(Math.random() * APPLE_PHRASES.length)];
+    } else if (domain.includes('.edu')) {
+      selectedMsg = EDU_PHRASES[Math.floor(Math.random() * EDU_PHRASES.length)];
+    } else {
+      selectedMsg = RANDOM_VIRAL_PHRASES[Math.floor(Math.random() * RANDOM_VIRAL_PHRASES.length)];
+    }
+
+    const isQualified = selectedMsg.startsWith('QUALIFIED');
+    const outcome = { status: isQualified ? ('QUALIFIED' as const) : ('DENIED' as const), message: selectedMsg };
+    setResult(outcome);
+
+    try {
+      const existingLogs = JSON.parse(localStorage.getItem('spacepaste_merch_signups') || '[]');
+      existingLogs.push({ email: email.trim(), outcome, timestamp: new Date().toISOString() });
+      localStorage.setItem('spacepaste_merch_signups', JSON.stringify(existingLogs));
+    } catch {
+      // Storage fallback
+    }
+
+    if (isQualified) {
+      sound.playScanSuccess();
+      confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+    } else {
+      sound.playStashItem();
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content" style={{ maxWidth: '580px', padding: '24px' }}>
+        
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '2.5px dashed #5D4037', paddingBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ fontSize: '2rem', backgroundColor: 'var(--color-orbit-orange)', width: '48px', height: '48px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'var(--border-thick)', color: '#FFF8E1' }}>
+              <ShoppingBag size={24} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '1.4rem' }}>Physical Merch & Sticker Drops</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 600 }}>
+                App is 100% FREE • Physical Goods Cost a Fee
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Informational Banner */}
+        <div style={{ backgroundColor: 'var(--bg-subtle)', border: 'var(--border-thick)', borderRadius: '14px', padding: '14px 16px', marginBottom: '20px' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-primary)', lineHeight: '1.45' }}>
+            🚀 <strong>Space Paste app features & storage are completely free forever</strong>. We fund ongoing development by releasing limited-edition physical Kosmonaut embroidered patches, NFC metal stash tags, and vinyl sticker packs.
+          </p>
+        </div>
+
+        {/* Qualification Checker Form */}
+        <form onSubmit={handleCheckQualification} style={{ marginBottom: '18px' }}>
+          <label style={{ fontSize: '0.88rem', fontWeight: 800, display: 'block', marginBottom: '6px' }}>
+            Enter Email for Drop Qualification & Priority Access:
+          </label>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <input
+              type="email"
+              required
+              placeholder="kosmonaut@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={checking}
+              style={{
+                flex: 1,
+                padding: '11px 14px',
+                borderRadius: '10px',
+                border: 'var(--border-thick)',
+                fontFamily: 'inherit',
+                fontSize: '0.95rem',
+                backgroundColor: '#FFFFFF',
+              }}
+            />
+            <button type="submit" className="btn btn-accent" disabled={checking}>
+              <Sparkles size={16} />
+              <span>{checking ? 'Checking...' : 'Check Status'}</span>
+            </button>
+          </div>
+        </form>
+
+        {/* Live Loading Simulation */}
+        {checking && (
+          <div style={{ padding: '16px', backgroundColor: '#FFFDE7', border: '2px solid #F57F17', borderRadius: '12px', textAlign: 'center', marginBottom: '16px' }}>
+            <RefreshCw size={24} className="spin" color="#F57F17" style={{ marginBottom: '8px' }} />
+            <p style={{ fontSize: '0.9rem', fontWeight: 700, color: '#F57F17' }}>{stepMsg}</p>
+          </div>
+        )}
+
+        {/* Qualification Result Output */}
+        {result && (
+          <div
+            style={{
+              padding: '18px',
+              borderRadius: '14px',
+              border: result.status === 'QUALIFIED' ? '2.5px solid #047857' : '2.5px solid #E53935',
+              backgroundColor: result.status === 'QUALIFIED' ? '#ECFDF5' : '#FFEBEE',
+              marginBottom: '18px',
+              animation: 'popIn 0.25s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              {result.status === 'QUALIFIED' ? (
+                <CheckCircle2 size={26} color="#047857" style={{ flexShrink: 0, marginTop: '2px' }} />
+              ) : (
+                <AlertCircle size={26} color="#E53935" style={{ flexShrink: 0, marginTop: '2px' }} />
+              )}
+              <div>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 900,
+                    marginBottom: '6px',
+                    backgroundColor: result.status === 'QUALIFIED' ? '#047857' : '#E53935',
+                    color: '#FFFFFF',
+                  }}
+                >
+                  {result.status}
+                </span>
+                <p style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: '1.4' }}>
+                  {result.message}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Merch Preview Grid */}
+        <div style={{ borderTop: '1.5px dashed #D7CCC8', paddingTop: '16px' }}>
+          <h4 style={{ fontSize: '0.95rem', marginBottom: '10px' }}>📦 Upcoming Kosmonaut Merch Drop Preview:</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <div style={{ padding: '10px', backgroundColor: 'var(--bg-subtle)', borderRadius: '10px', border: '1.5px solid #5D4037', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '2px' }}>🏷️</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>NFC Metal Tags</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>$12 (Pack of 3)</div>
+            </div>
+
+            <div style={{ padding: '10px', backgroundColor: 'var(--bg-subtle)', borderRadius: '10px', border: '1.5px solid #5D4037', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '2px' }}>🚀</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>Kosmonaut Patch</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>$9 Embroidered</div>
+            </div>
+
+            <div style={{ padding: '10px', backgroundColor: 'var(--bg-subtle)', borderRadius: '10px', border: '1.5px solid #5D4037', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '2px' }}>✨</div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 800 }}>Sticker Vault</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>$6 Vinyl Pack</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};

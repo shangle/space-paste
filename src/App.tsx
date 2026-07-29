@@ -7,10 +7,14 @@ import { LocationDetailModal } from './components/LocationDetailModal';
 import { QRPrintModal } from './components/QRPrintModal';
 import { BackupModal } from './components/BackupModal';
 import { ShareStashModal } from './components/ShareStashModal';
+import { MerchDropModal } from './components/MerchDropModal';
+import { DocumentationModal } from './components/DocumentationModal';
+import { LandingPage } from './components/LandingPage';
 
 import type { PhysicalLocation, GeoCoords } from './types';
 import { getAllLocations, saveLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
 import { getCurrentPosition, sortLocationsByProximity } from './services/geo';
+import { ShoppingBag, BookOpen } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [locations, setLocations] = useState<PhysicalLocation[]>([]);
@@ -21,15 +25,16 @@ export const App: React.FC = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const [showMerch, setShowMerch] = useState(false);
+  const [showDocs, setShowDocs] = useState(false);
   
   const [selectedLocation, setSelectedLocation] = useState<PhysicalLocation | null>(null);
   const [qrLocation, setQrLocation] = useState<PhysicalLocation | null>(null);
   const [shareLocation, setShareLocation] = useState<PhysicalLocation | null>(null);
 
-  // Initial setup: seed demo data & load locations
+  // Initial setup
   useEffect(() => {
     async function init() {
-      await seedDemoDataIfEmpty();
       const list = await getAllLocations();
       
       // Check URL Path routing (e.g. spacepaste.app/car or spacepaste.app/#/car)
@@ -59,6 +64,11 @@ export const App: React.FC = () => {
   const loadLocations = async () => {
     const list = await getAllLocations();
     setLocations(sortLocationsByProximity(list, currentCoords));
+  };
+
+  const handleStartDemo = async () => {
+    await seedDemoDataIfEmpty();
+    await loadLocations();
   };
 
   const fetchGPSPosition = async () => {
@@ -105,41 +115,36 @@ export const App: React.FC = () => {
         onRefreshGeo={fetchGPSPosition}
       />
 
-      {/* Main Location Grid */}
-      <main>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.45rem', color: 'var(--text-primary)' }}>
-              Physical Stashes ({locations.length})
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 600 }}>
-              {currentCoords
-                ? '📍 Sorted by distance to your current GPS position'
-                : 'Sorted by recent activity'}
-            </p>
-          </div>
+      {/* Top Banner Bar for Merch & Docs */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
+            <ShoppingBag size={14} />
+            <span>Merch Drops (App is Free)</span>
+          </button>
+
+          <button onClick={() => setShowDocs(true)} className="btn btn-sm">
+            <BookOpen size={14} />
+            <span>Launch Guide & Docs</span>
+          </button>
         </div>
 
-        {locations.length === 0 ? (
-          <div
-            style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-              backgroundColor: 'var(--bg-subtle)',
-              borderRadius: '20px',
-              border: '2.5px dashed #1E293B',
-              margin: '20px 0',
-            }}
-          >
-            <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>🚀</div>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>No physical stashes created yet!</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '20px', maxWidth: '420px', margin: '0 auto 20px auto' }}>
-              Create your first Space Paste stash for your car, work desk, or kitchen coffee station.
-            </p>
-            <button onClick={() => setShowAddLocation(true)} className="btn btn-primary">
-              + Create First Stash
-            </button>
+        {locations.length > 0 && (
+          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            Physical Stashes: {locations.length}
           </div>
+        )}
+      </div>
+
+      {/* Main Content Area */}
+      <main>
+        {locations.length === 0 ? (
+          <LandingPage
+            onStartDemo={handleStartDemo}
+            onOpenAddLocation={() => setShowAddLocation(true)}
+            onOpenMerchDrop={() => setShowMerch(true)}
+            onOpenDocs={() => setShowDocs(true)}
+          />
         ) : (
           <div className="grid-stash">
             {locations.map((loc) => (
@@ -209,6 +214,18 @@ export const App: React.FC = () => {
         <BackupModal
           onClose={() => setShowBackup(false)}
           onRefreshData={loadLocations}
+        />
+      )}
+
+      {showMerch && (
+        <MerchDropModal
+          onClose={() => setShowMerch(false)}
+        />
+      )}
+
+      {showDocs && (
+        <DocumentationModal
+          onClose={() => setShowDocs(false)}
         />
       )}
 

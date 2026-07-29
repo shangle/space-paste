@@ -1,34 +1,35 @@
-/* Space Paste - Soviet Kosmonaut Kid Bright Aesthetic Theme */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* Space Paste - Retro Psychedelic Groovy Brand Design System */
+@import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 
 :root {
-  --bg-main: #FAF6EE;
+  /* Brand Style Guide Palette */
+  --color-orbit-orange: #F28C38;
+  --color-cosmic-cream: #FFF8E1;
+  --color-rocket-red: #E53935;
+  --color-deep-brown: #5D4037;
+  --color-astro-turquoise: #00ACC1;
+  --color-retro-yellow: #FDD835;
+  
+  --bg-main: #FFF8E1; /* Cosmic Cream */
   --bg-card: #FFFFFF;
-  --bg-subtle: #F3ECE0;
+  --bg-subtle: #F5EBD4;
   
-  --text-primary: #1E293B;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
+  --text-primary: #5D4037; /* Deep Space Brown - Maximum AAA Contrast */
+  --text-secondary: #4A332C;
+  --text-muted: #7D5D53;
   
-  --border-thick: 2.5px solid #1E293B;
-  --border-subtle: 1.5px solid #CBD5E1;
+  --border-thick: 2.5px solid #5D4037;
+  --border-subtle: 1.5px solid #D7CCC8;
   
-  --radius-lg: 20px;
+  --radius-lg: 22px;
   --radius-md: 14px;
   --radius-sm: 8px;
   
-  --shadow-tactile: 4.5px 4.5px 0px #1E293B;
-  --shadow-tactile-sm: 2.5px 2.5px 0px #1E293B;
-  --shadow-tactile-lg: 7px 7px 0px #1E293B;
+  --shadow-tactile: 4.5px 4.5px 0px #5D4037;
+  --shadow-tactile-sm: 2.5px 2.5px 0px #5D4037;
+  --shadow-tactile-lg: 7px 7px 0px #5D4037;
 
-  /* Whimsical Kosmonaut Palette */
-  --accent-rocket: #FF5722;
-  --accent-teal: #00A896;
-  --accent-gold: #FFB703;
-  --accent-purple: #6C5CE7;
-  --accent-navy: #1E293B;
-  --accent-lime: #84CC16;
-  
+  --font-groovy: 'Shrikhand', cursive, sans-serif;
   --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
@@ -45,25 +46,32 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-  /* Whimsical space dot grid background */
-  background-image: radial-gradient(#ff572220 1.5px, transparent 1.5px), radial-gradient(#00a89615 1px, transparent 1px);
-  background-size: 24px 24px, 12px 12px;
-  background-position: 0 0, 12px 12px;
+  /* Retro 60s cosmic dot pattern */
+  background-image: radial-gradient(#F28C3825 1.8px, transparent 1.8px), radial-gradient(#00ACC120 1.2px, transparent 1.2px);
+  background-size: 26px 26px, 13px 13px;
+  background-position: 0 0, 13px 13px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
+  font-family: var(--font-groovy);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 800;
-  letter-spacing: -0.025em;
+  color: var(--text-primary);
 }
 
-/* Tactile Kosmonaut Buttons */
+/* High Contrast ADA Accessible Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  padding: 11px 20px;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 0.95rem;
@@ -85,37 +93,37 @@ h1, h2, h3, h4, h5, h6 {
 
 .btn:active {
   transform: translate(2px, 2px);
-  box-shadow: 1.5px 1.5px 0px #1E293B;
+  box-shadow: 1.5px 1.5px 0px #5D4037;
 }
 
 .btn-primary {
-  background-color: var(--accent-teal);
+  background-color: var(--color-astro-turquoise);
   color: #FFFFFF;
 }
 
 .btn-accent {
-  background-color: var(--accent-rocket);
+  background-color: var(--color-orbit-orange);
   color: #FFFFFF;
 }
 
 .btn-gold {
-  background-color: var(--accent-gold);
-  color: #1E293B;
+  background-color: var(--color-retro-yellow);
+  color: #5D4037;
 }
 
-.btn-navy {
-  background-color: var(--accent-navy);
+.btn-red {
+  background-color: var(--color-rocket-red);
   color: #FFFFFF;
 }
 
-.btn-purple {
-  background-color: var(--accent-purple);
-  color: #FFFFFF;
+.btn-brown {
+  background-color: var(--color-deep-brown);
+  color: #FFF8E1;
 }
 
 .btn-sm {
-  padding: 6px 14px;
-  font-size: 0.85rem;
+  padding: 7px 15px;
+  font-size: 0.86rem;
   box-shadow: var(--shadow-tactile-sm);
 }
 
@@ -136,7 +144,7 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--shadow-tactile-lg);
 }
 
-/* Badge pills */
+/* High Contrast Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -146,23 +154,24 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 0.78rem;
-  border: 1.5px solid #1E293B;
+  border: 1.5px solid #5D4037;
   background-color: var(--bg-subtle);
+  color: var(--text-primary);
 }
 
-.badge-green {
-  background-color: #ECFDF5;
-  color: #047857;
+.badge-orange {
+  background-color: #FBE9E7;
+  color: #D84315;
 }
 
-.badge-amber {
-  background-color: #FFFBEB;
-  color: #B45309;
+.badge-teal {
+  background-color: #E0F7FA;
+  color: #006064;
 }
 
-.badge-blue {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
+.badge-yellow {
+  background-color: #FFFDE7;
+  color: #F57F17;
 }
 
 .grid-stash {
@@ -175,7 +184,7 @@ h1, h2, h3, h4, h5, h6 {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(30, 41, 59, 0.7);
+  background-color: rgba(93, 64, 55, 0.75);
   backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
@@ -216,11 +225,10 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-subtle);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: #5D4037;
   border-radius: 4px;
 }
 
-/* Spin animation */
 .spin {
   animation: spin 1.2s linear infinite;
 }
