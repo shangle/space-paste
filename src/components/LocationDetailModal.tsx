@@ -96,7 +96,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
     await saveItem(updatedItem);
     sound.playChecklistPop();
 
-    // Check if all items completed for celebratory burst
     if (updatedChecklist.every((c) => c.completed)) {
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
     }
@@ -136,7 +135,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
       <div className="modal-content" style={{ maxWidth: '680px', padding: '24px' }}>
         
         {/* Header Bar */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '2px dashed #E2DCD2', paddingBottom: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '2.5px dashed #2A1B17', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
@@ -154,8 +153,8 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
               {location.icon}
             </div>
             <div>
-              <h2 style={{ fontSize: '1.5rem', lineHeight: '1.2' }}>{location.name} Vault</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '2px' }}>
+              <h2 style={{ fontSize: '1.5rem', lineHeight: '1.2', color: 'var(--text-primary)' }}>{location.name} Vault</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '2px', fontWeight: 600 }}>
                 {location.description || 'Stashed digital items & notes'}
               </p>
             </div>
@@ -181,7 +180,8 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 className={`btn btn-sm ${activeFilter === filter ? 'btn-primary' : ''}`}
                 style={{
                   textTransform: 'capitalize',
-                  backgroundColor: activeFilter === filter ? 'var(--accent-sage)' : 'var(--bg-subtle)',
+                  backgroundColor: activeFilter === filter ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+                  color: activeFilter === filter ? '#FFFFFF' : 'var(--text-primary)',
                 }}
               >
                 {filter === 'all' && '📦 All Stashed'}
@@ -221,7 +221,12 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   type="button"
                   onClick={() => setNewType(t)}
                   className={`btn btn-sm ${newType === t ? 'btn-gold' : ''}`}
-                  style={{ flex: 1, textTransform: 'capitalize' }}
+                  style={{
+                    flex: 1,
+                    textTransform: 'capitalize',
+                    backgroundColor: newType === t ? 'var(--color-retro-yellow)' : 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                  }}
                 >
                   {t === 'note' && '📝 Note'}
                   {t === 'link' && '🔗 Web Link'}
@@ -241,9 +246,11 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   width: '100%',
                   padding: '9px 12px',
                   borderRadius: '8px',
-                  border: '1.5px solid #1F2421',
+                  border: '1.5px solid #2A1B17',
                   fontFamily: 'inherit',
                   fontSize: '0.92rem',
+                  color: 'var(--text-primary)',
+                  backgroundColor: '#FFFFFF',
                 }}
               />
             </div>
@@ -259,9 +266,11 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                     width: '100%',
                     padding: '9px 12px',
                     borderRadius: '8px',
-                    border: '1.5px solid #1F2421',
+                    border: '1.5px solid #2A1B17',
                     fontFamily: 'inherit',
                     fontSize: '0.92rem',
+                    color: 'var(--text-primary)',
+                    backgroundColor: '#FFFFFF',
                   }}
                 />
               </div>
@@ -279,9 +288,11 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                     width: '100%',
                     padding: '9px 12px',
                     borderRadius: '8px',
-                    border: '1.5px solid #1F2421',
+                    border: '1.5px solid #2A1B17',
                     fontFamily: 'inherit',
                     fontSize: '0.92rem',
+                    color: 'var(--text-primary)',
+                    backgroundColor: '#FFFFFF',
                   }}
                 />
               </div>
@@ -289,7 +300,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
 
             {newType === 'checklist' && (
               <div style={{ marginBottom: '10px' }}>
-                <label style={{ fontSize: '0.8rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '0.8rem', fontWeight: 800, display: 'block', marginBottom: '4px' }}>
                   Checklist Tasks:
                 </label>
                 {checklistInputs.map((val, idx) => (
@@ -307,10 +318,12 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                       width: '100%',
                       padding: '7px 10px',
                       borderRadius: '6px',
-                      border: '1px solid #1F2421',
+                      border: '1px solid #2A1B17',
                       marginBottom: '6px',
                       fontFamily: 'inherit',
                       fontSize: '0.88rem',
+                      color: 'var(--text-primary)',
+                      backgroundColor: '#FFFFFF',
                     }}
                   />
                 ))}
@@ -334,10 +347,10 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
         {/* Item List Container */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '50vh', overflowY: 'auto' }}>
           {filteredItems.length === 0 ? (
-            <div style={{ padding: '36px 16px', textAlign: 'center', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: '1.5px dashed #1F2421' }}>
+            <div style={{ padding: '36px 16px', textAlign: 'center', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: '1.5px dashed #2A1B17' }}>
               <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🎈</div>
               <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>No items in this stash yet!</h4>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '4px' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '4px', fontWeight: 600 }}>
                 Tap "Stash New Item" above to add a note, link, or checklist for this location.
               </p>
             </div>
@@ -350,7 +363,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   key={item.id}
                   style={{
                     backgroundColor: isPinned ? '#FFFDE7' : 'var(--bg-card)',
-                    border: isPinned ? '2.5px solid var(--accent-gold)' : 'var(--border-thick)',
+                    border: isPinned ? '2.5px solid var(--color-retro-yellow)' : 'var(--border-thick)',
                     borderRadius: '14px',
                     padding: '16px',
                     boxShadow: 'var(--shadow-tactile-sm)',
@@ -375,11 +388,11 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
-                          color: isPinned ? 'var(--accent-gold)' : 'var(--text-muted)',
+                          color: isPinned ? 'var(--color-orbit-orange)' : 'var(--text-muted)',
                         }}
                         title={isPinned ? 'Unpin Item' : 'Pin Item'}
                       >
-                        <Pin size={16} fill={isPinned ? 'var(--accent-gold)' : 'none'} />
+                        <Pin size={16} fill={isPinned ? 'var(--color-orbit-orange)' : 'none'} />
                       </button>
 
                       <button
@@ -394,7 +407,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
 
                   {/* Content: Note / Link / Checklist */}
                   {item.type === 'note' && item.content && (
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', whiteSpace: 'pre-wrap', lineHeight: '1.4', marginBottom: '10px' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', whiteSpace: 'pre-wrap', lineHeight: '1.4', marginBottom: '10px', fontWeight: 600 }}>
                       {item.content}
                     </p>
                   )}
@@ -406,7 +419,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                         target="_blank"
                         rel="noreferrer"
                         className="btn btn-sm btn-navy"
-                        style={{ textDecoration: 'none' }}
+                        style={{ textDecoration: 'none', color: '#FFFFFF', backgroundColor: 'var(--color-deep-brown)' }}
                       >
                         <span>Open Link</span>
                         <ExternalLink size={14} />
@@ -416,7 +429,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                         className="btn btn-sm"
                         style={{ backgroundColor: 'var(--bg-subtle)' }}
                       >
-                        {copiedId === item.id ? <Check size={14} color="#2E7D32" /> : <Copy size={14} />}
+                        {copiedId === item.id ? <Check size={14} color="#047857" /> : <Copy size={14} />}
                         <span>{copiedId === item.id ? 'Copied!' : 'Copy URL'}</span>
                       </button>
                     </div>
@@ -435,8 +448,8 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                               cursor: 'pointer',
                               padding: '6px 10px',
                               borderRadius: '8px',
-                              backgroundColor: c.completed ? '#E8F5E9' : 'var(--bg-subtle)',
-                              border: '1px solid #1F2421',
+                              backgroundColor: c.completed ? '#ECFDF5' : 'var(--bg-subtle)',
+                              border: '1px solid #2A1B17',
                               transition: 'all 0.15s ease',
                             }}
                           >
@@ -444,14 +457,14 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                               type="checkbox"
                               checked={c.completed}
                               onChange={() => handleToggleChecklist(item, c.id)}
-                              style={{ width: '18px', height: '18px', accentColor: 'var(--accent-sage)' }}
+                              style={{ width: '18px', height: '18px', accentColor: 'var(--color-astro-turquoise)' }}
                             />
                             <span
                               style={{
                                 fontSize: '0.9rem',
                                 textDecoration: c.completed ? 'line-through' : 'none',
                                 color: c.completed ? 'var(--text-muted)' : 'var(--text-primary)',
-                                fontWeight: c.completed ? 400 : 600,
+                                fontWeight: c.completed ? 500 : 700,
                               }}
                             >
                               {c.text}
@@ -463,14 +476,14 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   )}
 
                   {/* Footer metadata */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '8px', fontWeight: 600 }}>
                     <span>Stashed {new Date(item.createdAt).toLocaleDateString()}</span>
                     {item.content && item.type === 'note' && (
                       <button
                         onClick={() => handleCopyText(item.content, item.id)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}
                       >
-                        {copiedId === item.id ? <Check size={12} color="#2E7D32" /> : <Copy size={12} />}
+                        {copiedId === item.id ? <Check size={12} color="#047857" /> : <Copy size={12} />}
                         <span>{copiedId === item.id ? 'Copied' : 'Copy'}</span>
                       </button>
                     )}

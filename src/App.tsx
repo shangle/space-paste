@@ -14,7 +14,7 @@ import { LandingPage } from './components/LandingPage';
 import type { PhysicalLocation, GeoCoords } from './types';
 import { getAllLocations, saveLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
 import { getCurrentPosition, sortLocationsByProximity } from './services/geo';
-import { ShoppingBag, BookOpen } from 'lucide-react';
+import { ShoppingBag, BookOpen, Plus, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [locations, setLocations] = useState<PhysicalLocation[]>([]);
@@ -130,7 +130,7 @@ export const App: React.FC = () => {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
             <ShoppingBag size={14} />
-            <span>Merch Drops (App is Free)</span>
+            <span>Merch Portal (App is Free)</span>
           </button>
 
           <button onClick={() => setShowDocs(true)} className="btn btn-sm">
@@ -148,13 +148,54 @@ export const App: React.FC = () => {
 
       {/* Main View Area */}
       <main>
-        {activeView === 'home' || locations.length === 0 ? (
+        {activeView === 'home' ? (
           <LandingPage
             onStartDemo={handleStartDemo}
             onOpenAddLocation={() => setShowAddLocation(true)}
             onOpenMerchDrop={() => setShowMerch(true)}
             onOpenDocs={() => setShowDocs(true)}
           />
+        ) : locations.length === 0 ? (
+          /* Empty Stashes Screen with Big Add Location Callout */
+          <div
+            style={{
+              padding: '60px 24px',
+              textAlign: 'center',
+              backgroundColor: 'var(--bg-card)',
+              borderRadius: '24px',
+              border: 'var(--border-thick)',
+              boxShadow: 'var(--shadow-tactile-lg)',
+              margin: '20px 0',
+            }}
+          >
+            <div style={{ fontSize: '3.8rem', marginBottom: '12px' }}>📦</div>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
+              No Physical Locations Stashed Yet!
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '24px', maxWidth: '460px', margin: '0 auto 24px auto', fontWeight: 600, lineHeight: '1.45' }}>
+              You haven't stashed any locations yet. Tag your car, work desk, coffee station, or garage workbench to get started.
+            </p>
+            
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowAddLocation(true)}
+                className="btn btn-primary"
+                style={{ padding: '14px 28px', fontSize: '1.1rem' }}
+              >
+                <Plus size={22} />
+                <span>+ Add Your First Physical Location</span>
+              </button>
+
+              <button
+                onClick={handleStartDemo}
+                className="btn btn-gold"
+                style={{ padding: '14px 22px', fontSize: '1.05rem' }}
+              >
+                <Sparkles size={18} />
+                <span>Load Sample Demo Locations</span>
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="grid-stash">
             {locations.map((loc) => (
