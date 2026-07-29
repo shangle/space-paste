@@ -1,0 +1,217 @@
+import React, { useEffect, useState } from 'react';
+import { Header } from './components/Header';
+import { LocationCard } from './components/LocationCard';
+import { ScannerModal } from './components/ScannerModal';
+import { AddLocationModal } from './components/AddLocationModal';
+import { LocationDetailModal } from './components/LocationDetailModal';
+import { QRPrintModal } from './components/QRPrintModal';
+import { BackupModal } from './components/BackupModal';
+import { ShareStashModal } from './components/ShareStashModal';
+
+import type { PhysicalLocation, GeoCoords } from './types';
+import { getAllLocations, saveLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
+import { getCurrentPosition, sortLocationsByProximity } from './services/geo';
+
+export const App: React.FC = () => {
+  const [locations, setLocations] = useState<PhysicalLocation[]>([]);
+  const [currentCoords, setCurrentCoords] = useState<GeoCoords | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+
+  // Modal active states
+  const [showScanner, setShowScanner] = useState(false);
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [showBackup, setShowBackup] = useState(false);
+  
+  const [selectedLocation, setSelectedLocation] = useState<PhysicalLocation | null>(null);
+  const [qrLocation, setQrLocation] = useState<PhysicalLocation | null>(null);
+  const [shareLocation, setShareLocation] = useState<PhysicalLocation | null>(null);
+
+  // Initial setup: seed demo data & load locations
+  useEffect(() => {
+    async function init() {
+      await seedDemoDataIfEmpty();
+      const list = await getAllLocations();
+      
+      // Check URL Path routing (e.g. spacepaste.app/car or spacepaste.app/#/car)
+      const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase() || window.location.hash.replace(/^#\/?/, '').toLowerCase();
+      
+      if (pathSlug && pathSlug !== '') {
+        const matched = list.find((loc) => {
+          const locSlug = loc.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return (
+            locSlug === pathSlug ||
+            loc.id.toLowerCase() === pathSlug ||
+            loc.code.toLowerCase().includes(pathSlug)
+          );
+        });
+
+        if (matched) {
+          setSelectedLocation(matched);
+        }
+      }
+
+      setLocations(sortLocationsByProximity(list, null));
+      fetchGPSPosition();
+    }
+    init();
+  }, []);
+
+  const loadLocations = async () => {
+    const list = await getAllLocations();
+    setLocations(sortLocationsByProximity(list, currentCoords));
+  };
+
+  const fetchGPSPosition = async () => {
+    try {
+      const pos = await getCurrentPosition();
+      setCurrentCoords(pos);
+      setGeoError(null);
+      setLocations((prev) => sortLocationsByProximity(prev, pos));
+    } catch (err: any) {
+      setGeoError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (currentCoords) {
+      setLocations((prev) => sortLocationsByProximity(prev, currentCoords));
+    }
+  }, [currentCoords]);
+
+  const handleSaveNewLocation = async (newLoc: PhysicalLocation) => {
+    await saveLocation(newLoc);
+    setShowAddLocation(false);
+    await loadLocations();
+    setSelectedLocation(newLoc);
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (confirm('Are you sure you want to delete this physical location stash?')) {
+      await deleteLocation(id);
+      await loadLocations();
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px 20px' }}>
+      
+      {/* Space Paste Header */}
+      <Header
+        onOpenScanner={() => setShowScanner(true)}
+        onOpenAddLocation={() => setShowAddLocation(true)}
+        onOpenBackup={() => setShowBackup(true)}
+        currentCoords={currentCoords}
+        geoError={geoError}
+        onRefreshGeo={fetchGPSPosition}
+      />
+
+      {/* Main Location Grid */}
+      <main>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.45rem', color: 'var(--text-primary)' }}>
+              Physical Stashes ({locations.length})
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 600 }}>
+              {currentCoords
+                ? '📍 Sorted by distance to your current GPS position'
+                : 'Sorted by recent activity'}
+            </p>
+          </div>
+        </div>
+
+        {locations.length === 0 ? (
+          <div
+            style={{
+              padding: '60px 20px',
+              textAlign: 'center',
+              backgroundColor: 'var(--bg-subtle)',
+              borderRadius: '20px',
+              border: '2.5px dashed #1E293B',
+              margin: '20px 0',
+            }}
+          >
+            <div style={{ fontSize: '3.5rem', marginBottom: '12px' }}>🚀</div>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '6px' }}>No physical stashes created yet!</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '20px', maxWidth: '420px', margin: '0 auto 20px auto' }}>
+              Create your first Space Paste stash for your car, work desk, or kitchen coffee station.
+            </p>
+            <button onClick={() => setShowAddLocation(true)} className="btn btn-primary">
+              + Create First Stash
+            </button>
+          </div>
+        ) : (
+          <div className="grid-stash">
+            {locations.map((loc) => (
+              <LocationCard
+                key={loc.id}
+                location={loc}
+                onOpenDetail={(location) => setSelectedLocation(location)}
+                onShowQR={(location) => setQrLocation(location)}
+                onShareStash={(location) => setShareLocation(location)}
+                onDelete={handleDeleteLocation}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Modals */}
+      {showScanner && (
+        <ScannerModal
+          locations={locations}
+          onClose={() => setShowScanner(false)}
+          onSelectLocation={(loc) => {
+            setShowScanner(false);
+            setSelectedLocation(loc);
+          }}
+        />
+      )}
+
+      {showAddLocation && (
+        <AddLocationModal
+          onClose={() => setShowAddLocation(false)}
+          onSave={handleSaveNewLocation}
+        />
+      )}
+
+      {selectedLocation && (
+        <LocationDetailModal
+          location={selectedLocation}
+          onClose={() => setSelectedLocation(null)}
+          onShowQR={(loc) => setQrLocation(loc)}
+          onUpdateLocationItemCount={loadLocations}
+        />
+      )}
+
+      {qrLocation && (
+        <QRPrintModal
+          location={qrLocation}
+          onClose={() => setQrLocation(null)}
+        />
+      )}
+
+      {shareLocation && (
+        <ShareStashModal
+          location={shareLocation}
+          onClose={() => setShareLocation(null)}
+          onSelectDetectedLocation={(code) => {
+            const loc = locations.find((l) => l.code === code || l.id === code || code.includes(l.id));
+            if (loc) {
+              setShareLocation(null);
+              setSelectedLocation(loc);
+            }
+          }}
+        />
+      )}
+
+      {showBackup && (
+        <BackupModal
+          onClose={() => setShowBackup(false)}
+          onRefreshData={loadLocations}
+        />
+      )}
+
+    </div>
+  );
+};
