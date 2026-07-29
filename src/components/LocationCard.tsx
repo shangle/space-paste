@@ -1,13 +1,12 @@
 import React from 'react';
-import { QrCode, Camera, MapPin, Package, ArrowRight, Trash2, Share2 } from 'lucide-react';
+import { QrCode, Share2, Trash2, ArrowRight } from 'lucide-react';
 import type { PhysicalLocation } from '../types';
-import { formatDistance } from '../services/geo';
 
 interface LocationCardProps {
   location: PhysicalLocation;
-  onOpenDetail: (loc: PhysicalLocation) => void;
-  onShowQR: (loc: PhysicalLocation) => void;
-  onShareStash: (loc: PhysicalLocation) => void;
+  onOpenDetail: (location: PhysicalLocation) => void;
+  onShowQR: (location: PhysicalLocation) => void;
+  onShareStash: (location: PhysicalLocation) => void;
   onDelete: (id: string) => void;
 }
 
@@ -18,67 +17,68 @@ export const LocationCard: React.FC<LocationCardProps> = ({
   onShareStash,
   onDelete,
 }) => {
-  const cardColor = location.color || '#00A896';
+  const distanceText = location.distanceMeters !== undefined
+    ? location.distanceMeters < 1000
+      ? `${Math.round(location.distanceMeters)}m away`
+      : `${(location.distanceMeters / 1000).toFixed(1)}km away`
+    : null;
 
   return (
     <div
       className="card-tile"
       style={{
+        borderTop: `6px solid ${location.color || 'var(--color-orbit-orange)'}`,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        minHeight: '260px',
-        borderTop: `6px solid ${cardColor}`,
+        minHeight: '220px',
       }}
     >
-      {/* Top Header & Badges */}
+      {/* Top Header Row */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
-                fontSize: '2.1rem',
-                width: '48px',
-                height: '48px',
+                fontSize: '2rem',
+                width: '46px',
+                height: '46px',
+                backgroundColor: 'var(--bg-subtle)',
+                borderRadius: '12px',
+                border: 'var(--border-thick)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'var(--bg-subtle)',
-                borderRadius: '14px',
-                border: '1.5px solid #1E293B',
               }}
             >
-              {location.icon || '🚀'}
+              {location.icon}
             </div>
+
             <div>
-              <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: '1.2' }}>
+              <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', lineHeight: '1.2' }}>
                 {location.name}
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                {location.distanceMeters !== undefined && location.distanceMeters !== Infinity ? (
-                  <span className="badge badge-green" style={{ fontSize: '0.72rem' }}>
-                    {formatDistance(location.distanceMeters)}
-                  </span>
+              </h2>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
+                {distanceText ? (
+                  <span className="badge badge-orange">📍 {distanceText}</span>
                 ) : (
-                  <span className="badge" style={{ fontSize: '0.72rem' }}>
-                    <MapPin size={12} /> Stashed
-                  </span>
+                  <span className="badge badge-teal">📍 Stashed</span>
                 )}
                 {location.photoSignature ? (
-                  <span className="badge badge-amber" style={{ fontSize: '0.72rem' }}>
-                    <Camera size={11} /> Photo Matched
-                  </span>
+                  <span className="badge badge-yellow">📸 Visual Hash</span>
                 ) : (
-                  <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>
-                    <QrCode size={11} /> QR Coded
-                  </span>
+                  <span className="badge">QR Coded</span>
                 )}
               </div>
             </div>
           </div>
 
           <button
-            onClick={() => onDelete(location.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(location.id);
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -86,64 +86,64 @@ export const LocationCard: React.FC<LocationCardProps> = ({
               color: 'var(--text-muted)',
               padding: '4px',
             }}
-            title="Delete Location"
+            title="Delete Stash"
           >
             <Trash2 size={16} />
           </button>
         </div>
 
-        {/* Description & Photo Preview if available */}
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '14px', lineHeight: '1.4' }}>
-          {location.description || 'No notes added for this location.'}
+        {/* Location Description */}
+        <p
+          style={{
+            fontSize: '0.88rem',
+            color: 'var(--text-secondary)',
+            lineHeight: '1.4',
+            marginBottom: '16px',
+            fontWeight: 600,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {location.description || 'Physical location stash point.'}
         </p>
-
-        {location.photoSnapshot && (
-          <div style={{ marginBottom: '14px', borderRadius: '12px', overflow: 'hidden', border: '1.5px solid #1E293B', maxHeight: '110px' }}>
-            <img
-              src={location.photoSnapshot}
-              alt={location.name}
-              style={{ width: '100%', height: '110px', objectFit: 'cover' }}
-            />
-          </div>
-        )}
       </div>
 
-      {/* Bottom Footer & Action Buttons */}
-      <div style={{ borderTop: '1.5px dashed #CBD5E1', paddingTop: '14px', marginTop: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', fontWeight: 800, fontSize: '0.9rem' }}>
-            <Package size={16} color={cardColor} />
-            <span>{location.itemCount ?? 0} Items</span>
-          </div>
+      {/* Bottom Action Controls */}
+      <div style={{ borderTop: '1.5px dashed #8D6E63', paddingTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span>📦</span>
+          <span>{location.itemCount || 0} Items</span>
+        </div>
 
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              onClick={() => onShareStash(location)}
-              className="btn btn-sm btn-gold"
-              title="Share Stash via Sonic Signal or Link"
-            >
-              <Share2 size={14} />
-            </button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            onClick={() => onShareStash(location)}
+            className="btn btn-sm btn-gold"
+            title="Share Stash via Sound Tone / Link / QR"
+          >
+            <Share2 size={14} />
+          </button>
 
-            <button
-              onClick={() => onShowQR(location)}
-              className="btn btn-sm"
-              style={{ backgroundColor: 'var(--bg-subtle)' }}
-              title="View & Print QR Sticker"
-            >
-              <QrCode size={14} />
-            </button>
-            
-            <button
-              onClick={() => onOpenDetail(location)}
-              className="btn btn-sm btn-primary"
-            >
-              <span>Open Vault</span>
-              <ArrowRight size={14} />
-            </button>
-          </div>
+          <button
+            onClick={() => onShowQR(location)}
+            className="btn btn-sm"
+            title="Print / View QR Code Sticker"
+          >
+            <QrCode size={14} />
+          </button>
+
+          <button
+            onClick={() => onOpenDetail(location)}
+            className="btn btn-sm btn-primary"
+          >
+            <span>Open Vault</span>
+            <ArrowRight size={14} />
+          </button>
         </div>
       </div>
+
     </div>
   );
 };

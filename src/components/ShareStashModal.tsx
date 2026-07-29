@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Volume2, Copy, QrCode, Share2, Radio, Check, Mic } from 'lucide-react';
+import { X, Radio, QrCode, Link as LinkIcon, Share, Volume2, Mic, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { PhysicalLocation } from '../types';
 import { sonicShare } from '../services/sonicShare';
@@ -8,7 +8,7 @@ import { sound } from '../services/sound';
 interface ShareStashModalProps {
   location: PhysicalLocation;
   onClose: () => void;
-  onSelectDetectedLocation?: (code: string) => void;
+  onSelectDetectedLocation: (code: string) => void;
 }
 
 export const ShareStashModal: React.FC<ShareStashModalProps> = ({
@@ -16,72 +16,70 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
   onClose,
   onSelectDetectedLocation,
 }) => {
-  const [activeTab, setActiveTab] = useState<'link' | 'sonic' | 'qr'>('sonic');
-  const [copied, setCopied] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [activeTab, setActiveTab] = useState<'sonic' | 'link' | 'qr'>('sonic');
   
-  // Sonic state
-  const [transmitting, setTransmitting] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [listening, setListening] = useState(false);
-  const [detectedMsg, setDetectedMsg] = useState<string | null>(null);
+  // Sonic FSK Broadcasting state
+  const [broadcasting, setBroadcasting] = useState(false);
 
-  // Direct short path link: https://spacepaste.app/location-name-or-id
-  const directSlug = location.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const shareableUrl = `https://spacepaste.app/${directSlug || location.id}`;
+  // Sonic FSK Receiving state
+  const [listening, setListening] = useState(false);
+
+  // Direct Link Copy state
+  const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  const directUrl = `https://spacepaste.app/${location.id}`;
 
   useEffect(() => {
-    QRCode.toDataURL(shareableUrl, { width: 280, margin: 2 }, (err, url) => {
-      if (!err && url) setQrDataUrl(url);
-    });
-  }, [shareableUrl]);
+    // Generate QR Data URL
+    QRCode.toDataURL(directUrl, { width: 280, margin: 2, color: { dark: '#2A1B17', light: '#FFF8E1' } })
+      .then(setQrDataUrl)
+      .catch(() => {});
 
-  // Transmit sonic pulse
-  const handleTransmitSonic = async () => {
-    setTransmitting(true);
-    setProgress(0);
-    try {
-      await sonicShare.transmitCode(location.code, (pct) => setProgress(pct));
+    return () => {
+      if (listening) {
+        sonicShare.stopListening();
+      }
+    };
+  }, [location.id]);
+
+  const handleToggleBroadcast = async () => {
+    if (broadcasting) {
+      setBroadcasting(false);
+    } else {
+      setBroadcasting(true);
       sound.playScanSuccess();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setTransmitting(false);
+      try {
+        await sonicShare.transmitCode(location.code);
+      } finally {
+        setBroadcasting(false);
+      }
     }
   };
 
-  // Toggle audio listener
-  const handleToggleListening = async () => {
+  const handleToggleListen = async () => {
     if (listening) {
       sonicShare.stopListening();
       setListening(false);
     } else {
+      setListening(true);
       try {
-        setListening(true);
-        setDetectedMsg('Listening for acoustic stash pulse from nearby device...');
-        await sonicShare.startListening((code) => {
+        await sonicShare.startListening((detectedCode: string) => {
           sound.playScanSuccess();
-          setDetectedMsg(`✨ Received acoustic signal: "${code}"`);
-          if (onSelectDetectedLocation) {
-            onSelectDetectedLocation(code);
-          }
+          sonicShare.stopListening();
+          setListening(false);
+          onSelectDetectedLocation(detectedCode);
         });
-      } catch (err: any) {
-        alert(`Mic access error: ${err.message}`);
+      } catch {
         setListening(false);
       }
     }
   };
 
-  useEffect(() => {
-    return () => {
-      sonicShare.stopListening();
-    };
-  }, []);
-
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareableUrl);
+    navigator.clipboard.writeText(directUrl);
     setCopied(true);
+    sound.playChecklistPop();
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -89,8 +87,8 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
     if (navigator.share) {
       navigator.share({
         title: `Space Paste Stash: ${location.name}`,
-        text: `Open ${location.name} stash on Space Paste!`,
-        url: shareableUrl,
+        text: `Open ${location.name} stash physical memory vault on Space Paste`,
+        url: directUrl,
       });
     } else {
       handleCopyLink();
@@ -99,85 +97,99 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '560px', padding: '24px' }}>
+      <div className="modal-content" style={{ maxWidth: '580px', padding: '24px' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '2px dashed #E2DCD2', paddingBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ fontSize: '1.8rem', backgroundColor: 'var(--bg-subtle)', width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #1E293B' }}>
-              🚀
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.35rem' }}>Share Stash: {location.name}</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                Modular sharing methods to transfer stash to other devices
-              </p>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '2.5px dashed #2A1B17', paddingBottom: '14px' }}>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)' }}>Share {location.name} Stash</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 600 }}>
+              Modular sound signal, direct link, or QR code
+            </p>
           </div>
           <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
           </button>
         </div>
 
-        {/* Tab Controls */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '18px', backgroundColor: 'var(--bg-subtle)', padding: '4px', borderRadius: '12px', border: '1.5px solid #1E293B' }}>
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
           <button
             onClick={() => setActiveTab('sonic')}
-            className={`btn btn-sm ${activeTab === 'sonic' ? 'btn-accent' : ''}`}
-            style={{ flex: 1 }}
+            className={`btn btn-sm ${activeTab === 'sonic' ? 'btn-primary' : ''}`}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'sonic' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'sonic' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <Radio size={14} /> Audible Tones
+            <Radio size={15} /> Acoustic Tone
           </button>
+
           <button
             onClick={() => setActiveTab('link')}
             className={`btn btn-sm ${activeTab === 'link' ? 'btn-primary' : ''}`}
-            style={{ flex: 1 }}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'link' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'link' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <Share2 size={14} /> Direct URL
+            <LinkIcon size={15} /> Direct Link
           </button>
+
           <button
             onClick={() => setActiveTab('qr')}
-            className={`btn btn-sm ${activeTab === 'qr' ? 'btn-gold' : ''}`}
-            style={{ flex: 1 }}
+            className={`btn btn-sm ${activeTab === 'qr' ? 'btn-primary' : ''}`}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'qr' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'qr' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <QrCode size={14} /> QR Code
+            <QrCode size={15} /> QR Code
           </button>
         </div>
 
-        {/* Sonic Audio Sharing Tab */}
+        {/* Sonic Sound Signal Tab */}
         {activeTab === 'sonic' && (
-          <div style={{ padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', textAlign: 'center' }}>
-            <h4 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <Volume2 size={20} color="var(--accent-rocket)" /> Sonic Stash Pulse
+          <div style={{ padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
+            <h4 style={{ fontSize: '1.05rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Volume2 color="var(--color-orbit-orange)" size={20} /> Acoustic Sound Pulse Transceiver
             </h4>
-            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
-              Transmit this stash code over audio frequency tones! Receiving devices listen with their microphone to automatically open the stash.
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: '1.45', marginBottom: '16px', fontWeight: 600 }}>
+              Space Paste uses Frequency Shift Keying (FSK) audio pulses to transmit stash location codes directly through device speakers & microphones!
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <button
-                onClick={handleTransmitSonic}
-                className="btn btn-accent"
-                disabled={transmitting}
-                style={{ width: '100%', padding: '12px' }}
+                onClick={handleToggleBroadcast}
+                className={`btn ${broadcasting ? 'btn-red' : 'btn-accent'}`}
+                style={{ padding: '12px' }}
               >
-                <Radio className={transmitting ? 'spin' : ''} size={18} />
-                <span>{transmitting ? `Broadcasting Tones (${progress}%)...` : '🔊 Broadcast Acoustic Signal'}</span>
+                <Volume2 size={18} />
+                <span>{broadcasting ? 'Transmitting...' : '🔊 Broadcast Tone'}</span>
               </button>
 
               <button
-                onClick={handleToggleListening}
-                className={`btn ${listening ? 'btn-gold' : 'btn-navy'}`}
-                style={{ width: '100%', padding: '10px' }}
+                onClick={handleToggleListen}
+                className={`btn ${listening ? 'btn-red' : 'btn-gold'}`}
+                style={{ padding: '12px' }}
               >
-                <Mic size={16} />
-                <span>{listening ? 'Stop Microphone Receiver' : '🎙️ Listen for Incoming Signal'}</span>
+                <Mic size={18} />
+                <span>{listening ? 'Stop Listening' : '🎙️ Receive Tone'}</span>
               </button>
             </div>
 
-            {detectedMsg && (
-              <div style={{ marginTop: '14px', padding: '10px', backgroundColor: '#FFFFFF', borderRadius: '10px', border: '1.5px solid #1E293B', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                {detectedMsg}
+            {broadcasting && (
+              <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#FFFDE7', borderRadius: '8px', border: '1.5px solid #FFB300', textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: '#C74800' }}>
+                📡 Transmitting sound pulse payload... Bring receiving phone nearby!
+              </div>
+            )}
+
+            {listening && (
+              <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#ECFDF5', borderRadius: '8px', border: '1.5px solid #047857', textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: '#047857' }}>
+                🎙️ Listening for incoming acoustic stash signals...
               </div>
             )}
           </div>
@@ -185,47 +197,51 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
 
         {/* Direct Link Tab */}
         {activeTab === 'link' && (
-          <div style={{ padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-              Direct Stash URL
+          <div style={{ padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>
+              Direct Stash URL Route:
             </label>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+            
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
                 type="text"
                 readOnly
-                value={shareableUrl}
+                value={directUrl}
                 style={{
                   flex: 1,
                   padding: '10px 12px',
                   borderRadius: '10px',
-                  border: '1.5px solid #1E293B',
+                  border: '1.5px solid #2A1B17',
                   fontFamily: 'monospace',
                   fontSize: '0.9rem',
                   backgroundColor: '#FFFFFF',
+                  color: 'var(--text-primary)',
                 }}
               />
-              <button onClick={handleCopyLink} className="btn btn-primary">
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
+              <button onClick={handleCopyLink} className="btn btn-accent">
+                {copied ? <Check size={16} /> : <LinkIcon size={16} />}
+                <span>{copied ? 'Copied!' : 'Copy'}</span>
               </button>
             </div>
 
-            <button onClick={handleNativeShare} className="btn btn-navy" style={{ width: '100%' }}>
-              <Share2 size={16} /> Share via Apps / OS Sheet
+            <button onClick={handleNativeShare} className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
+              <Share size={16} /> Share via Phone App Sheet
             </button>
           </div>
         )}
 
         {/* QR Code Tab */}
         {activeTab === 'qr' && (
-          <div style={{ padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', textAlign: 'center' }}>
+          <div style={{ textAlign: 'center', padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
             {qrDataUrl && (
-              <div style={{ display: 'inline-block', padding: '12px', backgroundColor: '#FFFFFF', border: '2px solid #1E293B', borderRadius: '12px', marginBottom: '12px' }}>
-                <img src={qrDataUrl} alt="QR Code" style={{ width: '200px', height: '200px', display: 'block' }} />
-              </div>
+              <img
+                src={qrDataUrl}
+                alt="QR Code"
+                style={{ width: '200px', height: '200px', borderRadius: '12px', border: 'var(--border-thick)', marginBottom: '12px' }}
+              />
             )}
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Scan this QR code with any camera or Space Paste to instantly open this stash.
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+              Scan this QR code with any camera phone to open {location.name} vault instantly.
             </p>
           </div>
         )}

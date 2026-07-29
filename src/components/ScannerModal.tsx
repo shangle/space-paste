@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, QrCode, Sparkles, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Camera, QrCode, Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
 import jsQR from 'jsqr';
-import confetti from 'canvas-confetti';
 import type { PhysicalLocation } from '../types';
 import { extractPhotoSignature, calculateSignatureMatch } from '../services/vision';
 import { sound } from '../services/sound';
@@ -9,7 +8,7 @@ import { sound } from '../services/sound';
 interface ScannerModalProps {
   locations: PhysicalLocation[];
   onClose: () => void;
-  onSelectLocation: (loc: PhysicalLocation) => void;
+  onSelectLocation: (location: PhysicalLocation) => void;
 }
 
 export const ScannerModal: React.FC<ScannerModalProps> = ({
@@ -17,319 +16,230 @@ export const ScannerModal: React.FC<ScannerModalProps> = ({
   onClose,
   onSelectLocation,
 }) => {
+  const [activeTab, setActiveTab] = useState<'dual' | 'qr' | 'photo'>('dual');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  
-  const [activeTab, setActiveTab] = useState<'dual' | 'qr' | 'photo'>('dual');
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [photoMatch, setPhotoMatch] = useState<{ location: PhysicalLocation; score: number } | null>(null);
-  const [statusMsg, setStatusMsg] = useState('Point camera at a QR code or your desk/physical spot...');
 
-  // Start Camera Stream
+  const [scanning, setScanning] = useState(true);
+  const [statusMsg, setStatusMsg] = useState('Position QR code or physical spot in frame...');
+  const [matchResult, setMatchResult] = useState<{ location: PhysicalLocation; score: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let animFrameId: number;
 
     async function startCamera() {
       try {
-        setCameraError(null);
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: { facingMode: { ideal: 'environment' } },
         });
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setCameraActive(true);
+      } catch {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        } catch (err: any) {
+          setError(`Camera access error: ${err.message || 'Permission denied'}`);
+          setScanning(false);
+          return;
         }
-      } catch (err) {
-        console.error('Camera access error:', err);
-        setCameraError('Unable to access camera. Check permissions or select a location manually below.');
+      }
+
+      if (videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+        scanLoop();
       }
     }
 
     startCamera();
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+    let lastPhotoMatchTime = 0;
+
+    function scanLoop() {
+      if (!scanning || !videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+        animFrameId = requestAnimationFrame(scanLoop);
+        return;
       }
-    };
-  }, []);
 
-  // Frame Processing Loop for QR & Photo Matching
-  useEffect(() => {
-    if (!cameraActive) return;
-
-    let animFrameId: number;
-    let lastPhotoCheckTime = 0;
-
-    const processFrame = () => {
       const video = videoRef.current;
-      const canvas = canvasRef.current;
+      const canvas = canvasRef.current || document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
 
-      if (video && canvas && video.readyState === video.HAVE_ENOUGH_DATA) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 1. QR Scan Pass
+        if (activeTab === 'dual' || activeTab === 'qr') {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrCode = jsQR(imgData.data, imgData.width, imgData.height);
 
-          // 1. QR Code Scan Attempt
-          if (activeTab === 'dual' || activeTab === 'qr') {
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const qrCode = jsQR(imageData.data, imageData.width, imageData.height, {
-              inversionAttempts: 'dontInvert',
-            });
+          if (qrCode && qrCode.data) {
+            const codeStr = qrCode.data.toLowerCase();
+            const matched = locations.find((l) =>
+              codeStr.includes(l.id.toLowerCase()) ||
+              codeStr.includes(l.code.toLowerCase()) ||
+              l.code.toLowerCase().includes(codeStr)
+            );
 
-            if (qrCode) {
-              const matchedLoc = locations.find((l) => l.code === qrCode.data || qrCode.data.includes(l.id));
-              if (matchedLoc) {
-                sound.playScanSuccess();
-                confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
-                onSelectLocation(matchedLoc);
-                return;
-              } else {
-                setStatusMsg(`QR Code detected: "${qrCode.data.slice(0, 24)}..." (Not linked to location)`);
-              }
+            if (matched) {
+              sound.playScanSuccess();
+              onSelectLocation(matched);
+              return;
             }
           }
+        }
 
-          // 2. Photo Signature Matching Attempt (Throttle to every 500ms)
-          const now = Date.now();
-          if ((activeTab === 'dual' || activeTab === 'photo') && now - lastPhotoCheckTime > 500) {
-            lastPhotoCheckTime = now;
+        // 2. Photo Signature Matching Pass (runs every 600ms)
+        const now = Date.now();
+        if ((activeTab === 'dual' || activeTab === 'photo') && now - lastPhotoMatchTime > 600) {
+          lastPhotoMatchTime = now;
+          try {
+            const currentSig = extractPhotoSignature(video).signature;
 
-            try {
-              const { signature } = extractPhotoSignature(video);
-              let bestLoc: PhysicalLocation | null = null;
-              let maxScore = 0;
+            let bestMatch: PhysicalLocation | null = null;
+            let highestScore = 0;
 
-              for (const loc of locations) {
-                if (loc.photoSignature) {
-                  const score = calculateSignatureMatch(signature, loc.photoSignature);
-                  if (score > maxScore) {
-                    maxScore = score;
-                    bestLoc = loc;
-                  }
+            for (const loc of locations) {
+              if (loc.photoSignature) {
+                const simScore = calculateSignatureMatch(currentSig, loc.photoSignature);
+                if (simScore > highestScore) {
+                  highestScore = simScore;
+                  bestMatch = loc;
                 }
               }
-
-              // Threshold for photo matching: 80% similarity
-              if (bestLoc && maxScore >= 80) {
-                setPhotoMatch({ location: bestLoc, score: maxScore });
-                setStatusMsg(`✨ High photo match! Found "${bestLoc.name}" (${maxScore}% match)`);
-              } else if (bestLoc && maxScore >= 65) {
-                setPhotoMatch({ location: bestLoc, score: maxScore });
-                setStatusMsg(`Photo similarity: "${bestLoc.name}" (${maxScore}%). Move closer to match.`);
-              } else {
-                setPhotoMatch(null);
-                if (activeTab === 'photo') {
-                  setStatusMsg('Scanning physical spot... Move camera to match your desk or location.');
-                }
-              }
-            } catch {
-              // Frame reading fallback
             }
+
+            if (bestMatch && highestScore >= 72) {
+              setMatchResult({ location: bestMatch, score: highestScore });
+              setStatusMsg(`Visual Match: ${bestMatch.name} (${highestScore}% match)`);
+            } else {
+              setMatchResult(null);
+              setStatusMsg('Position QR code or physical spot in frame...');
+            }
+          } catch {
+            // Skip frame error
           }
         }
       }
 
-      animFrameId = requestAnimationFrame(processFrame);
-    };
-
-    animFrameId = requestAnimationFrame(processFrame);
+      animFrameId = requestAnimationFrame(scanLoop);
+    }
 
     return () => {
       cancelAnimationFrame(animFrameId);
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
     };
-  }, [cameraActive, activeTab, locations, onSelectLocation]);
-
-  const handleConfirmPhotoMatch = () => {
-    if (photoMatch) {
-      sound.playScanSuccess();
-      confetti({ particleCount: 70, spread: 80, origin: { y: 0.6 } });
-      onSelectLocation(photoMatch.location);
-    }
-  };
+  }, [scanning, activeTab, locations]);
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '640px', padding: '20px' }}>
+      <div className="modal-content" style={{ maxWidth: '620px', padding: '24px' }}>
         
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Camera size={22} color="var(--accent-terracotta)" />
-            <h2 style={{ fontSize: '1.4rem' }}>Physical Location Scanner</h2>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)' }}>Scan & Match Location</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+              Recognizes QR stickers & visual desk photo signatures
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="btn btn-sm"
-            style={{ padding: '6px', borderRadius: '50%' }}
-          >
+          <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
             <X size={18} />
           </button>
         </div>
 
-        {/* Tab Controls */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', backgroundColor: 'var(--bg-subtle)', padding: '4px', borderRadius: '12px', border: '1.5px solid #1F2421' }}>
+        {/* Mode Selector */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <button
             onClick={() => setActiveTab('dual')}
             className={`btn btn-sm ${activeTab === 'dual' ? 'btn-primary' : ''}`}
-            style={{ flex: 1, border: activeTab === 'dual' ? 'var(--border-thick)' : 'none', boxShadow: activeTab === 'dual' ? 'var(--shadow-tactile-sm)' : 'none' }}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'dual' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'dual' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <Sparkles size={14} /> Dual Auto Match
+            <Sparkles size={14} /> Dual Scanner
           </button>
+
           <button
             onClick={() => setActiveTab('qr')}
             className={`btn btn-sm ${activeTab === 'qr' ? 'btn-primary' : ''}`}
-            style={{ flex: 1, border: activeTab === 'qr' ? 'var(--border-thick)' : 'none', boxShadow: activeTab === 'qr' ? 'var(--shadow-tactile-sm)' : 'none' }}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'qr' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'qr' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <QrCode size={14} /> QR Code Only
+            <QrCode size={14} /> QR Only
           </button>
+
           <button
             onClick={() => setActiveTab('photo')}
             className={`btn btn-sm ${activeTab === 'photo' ? 'btn-primary' : ''}`}
-            style={{ flex: 1, border: activeTab === 'photo' ? 'var(--border-thick)' : 'none', boxShadow: activeTab === 'photo' ? 'var(--shadow-tactile-sm)' : 'none' }}
+            style={{
+              flex: 1,
+              backgroundColor: activeTab === 'photo' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
+              color: activeTab === 'photo' ? '#FFFFFF' : 'var(--text-primary)',
+            }}
           >
-            <Camera size={14} /> Desk Photo Match
+            <Camera size={14} /> Photo Match
           </button>
         </div>
 
-        {/* Camera Viewport Container */}
-        <div
-          style={{
-            position: 'relative',
-            width: '100%',
-            height: '320px',
-            backgroundColor: '#000000',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            border: 'var(--border-thick)',
-            boxShadow: 'var(--shadow-tactile)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-          <canvas ref={canvasRef} style={{ display: 'none' }} />
+        {/* Camera Viewport */}
+        {error ? (
+          <div style={{ padding: '24px', backgroundColor: '#FFEBEE', border: '2px solid #C62828', borderRadius: '14px', textAlign: 'center' }}>
+            <AlertCircle size={32} color="#C62828" style={{ marginBottom: '8px' }} />
+            <p style={{ color: '#C62828', fontWeight: 800, fontSize: '0.95rem' }}>{error}</p>
+          </div>
+        ) : (
+          <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: 'var(--border-thick)', backgroundColor: '#000000', height: '280px' }}>
+            <video ref={videoRef} playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-          {/* Scanner Overlay HUD */}
-          {cameraActive && (
+            {/* Scanner Reticle Overlay */}
             <div
               style={{
                 position: 'absolute',
-                inset: '0',
-                border: '2px dashed rgba(255, 255, 255, 0.4)',
-                margin: '24px',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '180px',
+                height: '180px',
+                border: '3px dashed #FFB300',
                 borderRadius: '16px',
+                boxShadow: '0 0 0 9999px rgba(42, 27, 23, 0.45)',
                 pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
-            >
-              {/* QR Reticle */}
-              {activeTab !== 'photo' && (
-                <div
-                  style={{
-                    width: '180px',
-                    height: '180px',
-                    border: '3px solid var(--accent-gold)',
-                    borderRadius: '16px',
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.4)',
+            />
+
+            {/* Visual Match Pop Button */}
+            {matchResult && (
+              <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px', zIndex: 10 }}>
+                <button
+                  onClick={() => {
+                    sound.playScanSuccess();
+                    onSelectLocation(matchResult.location);
                   }}
-                />
-              )}
-            </div>
-          )}
-
-          {/* Camera Error Message */}
-          {cameraError && (
-            <div style={{ padding: '24px', textAlign: 'center', color: '#FFFFFF' }}>
-              <AlertCircle size={36} color="var(--accent-terracotta)" style={{ marginBottom: '8px' }} />
-              <p style={{ fontSize: '0.95rem', marginBottom: '12px' }}>{cameraError}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Live Status Message & Photo Match Indicator */}
-        <div style={{ marginTop: '16px' }}>
-          {photoMatch && photoMatch.score >= 80 ? (
-            <div
-              style={{
-                backgroundColor: '#E8F5E9',
-                border: '2px solid #2E7D32',
-                borderRadius: '12px',
-                padding: '12px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CheckCircle size={24} color="#2E7D32" />
-                <div>
-                  <div style={{ fontWeight: 700, color: '#1B5E20' }}>
-                    Matched "{photoMatch.location.name}"! ({photoMatch.score}% similarity)
-                  </div>
-                  <div style={{ fontSize: '0.82rem', color: '#2E7D32' }}>
-                    Physical spot recognized from photo signature.
-                  </div>
-                </div>
+                  className="btn btn-gold"
+                  style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                >
+                  <Sparkles size={18} /> Open {matchResult.location.name} Vault ({matchResult.score}% match)
+                </button>
               </div>
-              <button onClick={handleConfirmPhotoMatch} className="btn btn-sm btn-primary">
-                Open Stash
-              </button>
-            </div>
-          ) : (
-            <div
-              style={{
-                backgroundColor: 'var(--bg-subtle)',
-                border: '1.5px solid #1F2421',
-                borderRadius: '12px',
-                padding: '10px 14px',
-                fontSize: '0.88rem',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              <RefreshCw size={14} className="spin" />
-              <span>{statusMsg}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Manual Location Selection Fallback */}
-        <div style={{ borderTop: '1.5px dashed #E2DCD2', marginTop: '18px', paddingTop: '14px' }}>
-          <label style={{ fontSize: '0.82rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-            Or select a location manually from your list:
-          </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-            {locations.map((loc) => (
-              <button
-                key={loc.id}
-                onClick={() => {
-                  sound.playScanSuccess();
-                  onSelectLocation(loc);
-                }}
-                className="btn btn-sm"
-                style={{ backgroundColor: 'var(--bg-card)' }}
-              >
-                <span>{loc.icon}</span>
-                <span>{loc.name}</span>
-              </button>
-            ))}
+            )}
           </div>
+        )}
+
+        {/* Live Status Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '14px', color: 'var(--text-secondary)', fontSize: '0.88rem', fontWeight: 700 }}>
+          <RefreshCw size={16} className="spin" color="var(--color-orbit-orange)" />
+          <span>{statusMsg}</span>
         </div>
 
       </div>
