@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header style={{ padding: '20px 0 28px 0', borderBottom: '2.5px dashed #CBD5E1', marginBottom: '28px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         
-        {/* Space Paste Logo & Title */}
+        {/* Space Paste Minimalist Logo & Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div
             style={{
@@ -33,13 +33,14 @@ export const Header: React.FC<HeaderProps> = ({
               border: 'var(--border-thick)',
               boxShadow: 'var(--shadow-tactile-sm)',
               overflow: 'hidden',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#FAF6EE',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              padding: '2px',
             }}
           >
-            <img src="/logo.jpg" alt="Space Paste Kosmonaut" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src="/logo.svg" alt="Space Paste Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
