@@ -64,6 +64,33 @@ h4, h5, h6 {
   color: var(--text-primary);
 }
 
+/* Mobile App Layout Classes */
+@media (max-width: 639px) {
+  .desktop-only-subtitle,
+  .desktop-nav-tabs,
+  .desktop-toolbar {
+    display: none !important;
+  }
+  .mobile-tab-bar {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .desktop-only-subtitle {
+    display: block !important;
+  }
+  .desktop-nav-tabs {
+    display: flex !important;
+  }
+  .desktop-toolbar {
+    display: flex !important;
+  }
+  .mobile-tab-bar {
+    display: none !important;
+  }
+}
+
 /* Mobile-First High-Performance Buttons (Minimum 44px Touch Targets) */
 .btn {
   display: inline-flex;

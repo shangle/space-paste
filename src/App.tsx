@@ -12,6 +12,8 @@ import { MerchDropModal } from './components/MerchDropModal';
 import { DocumentationModal } from './components/DocumentationModal';
 import { LandingPage } from './components/LandingPage';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { Footer } from './components/Footer';
+import { MobileTabBar } from './components/MobileTabBar';
 
 import type { PhysicalLocation, GeoCoords } from './types';
 import { getAllLocationsWithCounts, saveLocation, updateLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
@@ -26,6 +28,7 @@ export const App: React.FC = () => {
 
   // Search Filter State (Slack / Gmail Style Search)
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   // Modal active states
   const [showScanner, setShowScanner] = useState(false);
@@ -151,10 +154,12 @@ export const App: React.FC = () => {
         onRefreshGeo={fetchGPSPosition}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        showMobileSearch={showMobileSearch}
+        onToggleMobileSearch={() => setShowMobileSearch(!showMobileSearch)}
       />
 
-      {/* Quick Merch, Docs & GitHub Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+      {/* Quick Merch, Docs & GitHub Bar (Desktop Only) */}
+      <div className="desktop-toolbar" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
             <ShoppingBag size={14} />
@@ -271,6 +276,27 @@ export const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Global Comprehensive Footer */}
+      <Footer
+        onGoHome={() => setActiveView('home')}
+        onGoStashes={() => setActiveView('stashes')}
+        onOpenAddLocation={() => setShowAddLocation(true)}
+        onOpenBackup={() => setShowBackup(true)}
+        onOpenDocs={() => setShowDocs(true)}
+        onOpenMerch={() => setShowMerch(true)}
+      />
+
+      {/* Mobile App Bottom Navigation Dock */}
+      <MobileTabBar
+        activeView={activeView}
+        stashesCount={locations.length}
+        onGoHome={() => setActiveView('home')}
+        onGoStashes={() => setActiveView('stashes')}
+        onOpenScanner={() => setShowScanner(true)}
+        onOpenAddLocation={() => setShowAddLocation(true)}
+        onToggleSearch={() => setShowMobileSearch(!showMobileSearch)}
+      />
 
       {/* Modals */}
       {showScanner && (
