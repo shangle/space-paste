@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Camera, Plus, MapPin, Database, Home, Package, Search } from 'lucide-react';
+import { Camera, Plus, MapPin, Database, Package, Search, ArrowRight } from 'lucide-react';
 import type { GeoCoords } from '../types';
 
 interface HeaderProps {
@@ -35,30 +35,30 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Global Keyboard Shortcut: '/' or 'Cmd+K' to focus search bar
+  // Global Keyboard Shortcut: '/' or 'Cmd+K' to focus search bar when in app dashboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      if (activeView === 'stashes' && (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activeView]);
 
   return (
     <header className="app-header" style={{ padding: '12px 0 16px 0', borderBottom: '2px dashed #CBD5E1', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         
-        {/* Top App Brand & Navigation Row */}
+        {/* Top App Brand & Header Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           
-          {/* Logo & Brand Title */}
+          {/* Logo & Brand Title (Clicking logo always returns to Home) */}
           <div
             onClick={onGoHome}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-            title="Space Paste - Home"
+            title="Space Paste - Return to Home"
           >
             <img
               src="/logo.svg"
@@ -73,104 +73,95 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="desktop-only-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', marginTop: '2px', fontWeight: 600 }}>
-                Physical Location Memory & Item Vault
+                Physical Location Memory Vault
               </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs */}
-          <div className="desktop-nav-tabs" style={{ gap: '4px', backgroundColor: 'var(--bg-subtle)', padding: '3px', borderRadius: '10px', border: '1.5px solid #2A1B17' }}>
-            <button
-              onClick={onGoHome}
-              className={`btn btn-sm ${activeView === 'home' ? 'btn-gold' : ''}`}
-              style={{ border: activeView === 'home' ? 'var(--border-thick)' : 'none', boxShadow: 'none' }}
-            >
-              <Home size={14} />
-              <span>Home</span>
-            </button>
-
+          {/* If on Public Landing Page (Home): Clean Single CTA Button "My Stashes ➔" */}
+          {activeView === 'home' ? (
             <button
               onClick={onGoStashes}
-              className={`btn btn-sm ${activeView === 'stashes' ? 'btn-primary' : ''}`}
-              style={{ border: activeView === 'stashes' ? 'var(--border-thick)' : 'none', boxShadow: 'none' }}
+              className="btn btn-primary"
+              style={{ padding: '10px 18px', fontSize: '0.95rem' }}
             >
-              <Package size={14} />
+              <Package size={16} />
               <span>My Stashes ({stashesCount})</span>
+              <ArrowRight size={16} />
             </button>
-          </div>
-
-          {/* Quick Header Right Actions (GPS Badge + Backup) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button
-              onClick={onRefreshGeo}
-              className="btn btn-sm"
-              style={{
-                backgroundColor: currentCoords ? '#ECFDF5' : '#FFFBEB',
-                borderColor: '#2A1B17',
-                color: '#2A1B17',
-                padding: '4px 8px',
-                fontSize: '0.75rem',
-              }}
-              title={geoError || 'Click to update GPS position'}
-            >
-              <MapPin size={13} color={currentCoords ? '#047857' : '#B45309'} />
-              <span style={{ fontWeight: 700 }}>
-                {currentCoords ? 'GPS Active' : 'GPS Idle'}
-              </span>
-            </button>
-
-            <button onClick={onOpenBackup} className="btn btn-sm" style={{ padding: '6px' }} title="Data Backup & Export">
-              <Database size={14} />
-            </button>
-          </div>
-
-        </div>
-
-        {/* Inline Compact Row: Search Bar (Not full width) + Scan & Add Location Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '4px' }}>
-          
-          {/* Compact Search Input */}
-          {(showMobileSearch || window.innerWidth >= 640) && (
-            <div style={{ flex: '0 1 320px', minWidth: '220px', position: 'relative' }}>
-              <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                aria-label="Search physical stashes, notes, cables, or links"
-                placeholder="Search stashes, notes... (/)"
-                value={searchQuery}
-                onChange={(e) => {
-                  onSearchChange(e.target.value);
-                  if (activeView !== 'stashes') onGoStashes();
-                }}
+          ) : (
+            /* If inside App Dashboard: GPS Badge + Backup controls */
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={onRefreshGeo}
+                className="btn btn-sm"
                 style={{
-                  width: '100%',
-                  padding: '8px 12px 8px 36px',
-                  borderRadius: '10px',
-                  border: 'var(--border-thick)',
-                  fontFamily: 'inherit',
-                  fontSize: '0.88rem',
-                  backgroundColor: '#FFFFFF',
-                  color: 'var(--text-primary)',
+                  backgroundColor: currentCoords ? '#ECFDF5' : '#FFFBEB',
+                  borderColor: '#2A1B17',
+                  color: '#2A1B17',
+                  padding: '4px 8px',
+                  fontSize: '0.75rem',
                 }}
-              />
+                title={geoError || 'Click to update GPS position'}
+              >
+                <MapPin size={13} color={currentCoords ? '#047857' : '#B45309'} />
+                <span style={{ fontWeight: 700 }}>
+                  {currentCoords ? 'GPS Active' : 'GPS Idle'}
+                </span>
+              </button>
+
+              <button onClick={onOpenBackup} className="btn btn-sm" style={{ padding: '6px' }} title="Data Backup & Export">
+                <Database size={14} />
+              </button>
             </div>
           )}
 
-          {/* Desktop Toolbar Action Buttons Right Next To Search */}
-          <div className="desktop-toolbar" style={{ alignItems: 'center', gap: '8px' }}>
-            <button onClick={onOpenScanner} className="btn btn-accent">
-              <Camera size={16} />
-              <span>Scan & Match</span>
-            </button>
-
-            <button onClick={onOpenAddLocation} className="btn btn-primary">
-              <Plus size={16} />
-              <span>+ Add Location</span>
-            </button>
-          </div>
-
         </div>
+
+        {/* APP DASHBOARD ONLY CONTROLS: Inline Search + Scan & Add Buttons */}
+        {activeView === 'stashes' && (
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '2px' }}>
+            
+            {/* Compact Search Input */}
+            {(showMobileSearch || window.innerWidth >= 640) && (
+              <div style={{ flex: '0 1 320px', minWidth: '220px', position: 'relative' }}>
+                <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  aria-label="Search physical stashes, notes, cables, or links"
+                  placeholder="Search stashes, notes... (/)"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px 8px 36px',
+                    borderRadius: '10px',
+                    border: 'var(--border-thick)',
+                    fontFamily: 'inherit',
+                    fontSize: '0.88rem',
+                    backgroundColor: '#FFFFFF',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Desktop Action Buttons (Scan & Match + Add Location) */}
+            <div className="desktop-toolbar" style={{ alignItems: 'center', gap: '8px' }}>
+              <button onClick={onOpenScanner} className="btn btn-accent">
+                <Camera size={16} />
+                <span>Scan & Match</span>
+              </button>
+
+              <button onClick={onOpenAddLocation} className="btn btn-primary">
+                <Plus size={16} />
+                <span>+ Add Location</span>
+              </button>
+            </div>
+
+          </div>
+        )}
 
       </div>
     </header>

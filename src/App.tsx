@@ -38,15 +38,36 @@ export const App: React.FC = () => {
   const [qrLocation, setQrLocation] = useState<PhysicalLocation | null>(null);
   const [shareLocation, setShareLocation] = useState<PhysicalLocation | null>(null);
 
-  // Initial setup
+  // Synchronize View State & Hash Routing (`/#/stashes` vs `/#/home` or `/stashes`)
+  const navigateToView = (view: 'home' | 'stashes') => {
+    setActiveView(view);
+    if (view === 'stashes') {
+      window.history.replaceState(null, '', '#/stashes');
+    } else {
+      window.history.replaceState(null, '', '#/home');
+    }
+  };
+
+  // Initial setup & route parsing
   useEffect(() => {
     async function init() {
       const list = await getAllLocationsWithCounts();
       
-      // Check URL Path routing (e.g. spacepaste.app/car or spacepaste.app/#/car)
+      // Parse URL Path & Hash routes
       const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase() || window.location.hash.replace(/^#\/?/, '').toLowerCase();
       
-      if (pathSlug && pathSlug !== '') {
+      if (pathSlug === 'home' || pathSlug === '') {
+        if (list.length === 0) {
+          setActiveView('home');
+        } else if (pathSlug === 'home') {
+          setActiveView('home');
+        } else {
+          setActiveView('stashes');
+        }
+      } else if (pathSlug === 'stashes' || pathSlug === 'dashboard') {
+        setActiveView('stashes');
+      } else {
+        // Direct location route lookup (e.g. spacepaste.app/car)
         const matched = list.find((loc) => {
           const locSlug = loc.name.toLowerCase().replace(/[^a-z0-9]/g, '');
           return (
@@ -59,9 +80,9 @@ export const App: React.FC = () => {
         if (matched) {
           setSelectedLocation(matched);
           setActiveView('stashes');
+        } else {
+          setActiveView('stashes');
         }
-      } else if (list.length === 0) {
-        setActiveView('home');
       }
 
       setLocations(sortLocationsByProximity(list, null));
@@ -78,7 +99,7 @@ export const App: React.FC = () => {
   const handleStartDemo = async () => {
     await seedDemoDataIfEmpty();
     await loadLocations();
-    setActiveView('stashes');
+    navigateToView('stashes');
   };
 
   const fetchGPSPosition = async () => {
@@ -103,7 +124,7 @@ export const App: React.FC = () => {
     setShowAddLocation(false);
     await loadLocations();
     setSelectedLocation(newLoc);
-    setActiveView('stashes');
+    navigateToView('stashes');
   };
 
   const handleUpdateExistingLocation = async (updatedLoc: PhysicalLocation) => {
@@ -136,13 +157,13 @@ export const App: React.FC = () => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 14px 40px 14px' }}>
       
-      {/* Space Paste Header App Bar with Compact Inline Search */}
+      {/* App Header */}
       <Header
         onOpenScanner={() => setShowScanner(true)}
         onOpenAddLocation={() => setShowAddLocation(true)}
         onOpenBackup={() => setShowBackup(true)}
-        onGoHome={() => setActiveView('home')}
-        onGoStashes={() => setActiveView('stashes')}
+        onGoHome={() => navigateToView('home')}
+        onGoStashes={() => navigateToView('stashes')}
         activeView={activeView}
         stashesCount={locations.length}
         currentCoords={currentCoords}
@@ -153,94 +174,100 @@ export const App: React.FC = () => {
         showMobileSearch={showMobileSearch}
       />
 
-      {/* PWA App Install Banner with Snooze & Dismiss */}
-      <PWAInstallBanner />
-
       {/* Main View Area */}
       <main>
         {activeView === 'home' ? (
+          /* Public Product Home Landing Page */
           <LandingPage
             onStartDemo={handleStartDemo}
             onOpenAddLocation={() => setShowAddLocation(true)}
           />
-        ) : filteredLocations.length === 0 ? (
-          /* Empty Search / Empty Stashes View */
-          <div
-            style={{
-              padding: '40px 18px',
-              textAlign: 'center',
-              backgroundColor: 'var(--bg-card)',
-              borderRadius: '20px',
-              border: 'var(--border-thick)',
-              boxShadow: 'var(--shadow-tactile)',
-              margin: '16px 0',
-            }}
-          >
-            <div style={{ fontSize: '3.2rem', marginBottom: '10px' }}>
-              {searchQuery ? '🔍' : '📦'}
-            </div>
-            <h2 style={{ fontSize: '1.6rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
-              {searchQuery ? `No stashes found matching "${searchQuery}"` : 'No Physical Locations Stashed Yet!'}
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '20px', maxWidth: '440px', margin: '0 auto 20px auto', fontWeight: 600, lineHeight: '1.4' }}>
-              {searchQuery
-                ? 'Try searching for another keyword or add a new physical location.'
-                : "You haven't stashed any locations yet. Tag your car, work desk, coffee station, or garage workbench to get started."}
-            </p>
-            
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              {searchQuery ? (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="btn btn-sm btn-gold"
-                  style={{ padding: '10px 18px' }}
-                >
-                  Clear Search Filter
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setShowAddLocation(true)}
-                    className="btn btn-primary"
-                    style={{ padding: '12px 24px', fontSize: '1.05rem' }}
-                  >
-                    <Plus size={20} />
-                    <span>+ Add Your First Location</span>
-                  </button>
-
-                  <button
-                    onClick={handleStartDemo}
-                    className="btn btn-gold"
-                    style={{ padding: '12px 20px', fontSize: '1rem' }}
-                  >
-                    <Sparkles size={16} />
-                    <span>Load Sample Locations</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
         ) : (
-          <div className="grid-stash">
-            {filteredLocations.map((loc) => (
-              <LocationCard
-                key={loc.id}
-                location={loc}
-                onOpenDetail={(location) => setSelectedLocation(location)}
-                onEditLocation={(location) => setEditingLocation(location)}
-                onShowQR={(location) => setQrLocation(location)}
-                onShareStash={(location) => setShareLocation(location)}
-                onDelete={handleDeleteLocation}
-              />
-            ))}
-          </div>
+          /* App Dashboard View (`/stashes`) */
+          <>
+            {/* PWA App Install Banner (App Dashboard Only) */}
+            <PWAInstallBanner />
+
+            {filteredLocations.length === 0 ? (
+              /* Empty Search / Empty Stashes View */
+              <div
+                style={{
+                  padding: '40px 18px',
+                  textAlign: 'center',
+                  backgroundColor: 'var(--bg-card)',
+                  borderRadius: '20px',
+                  border: 'var(--border-thick)',
+                  boxShadow: 'var(--shadow-tactile)',
+                  margin: '16px 0',
+                }}
+              >
+                <div style={{ fontSize: '3.2rem', marginBottom: '10px' }}>
+                  {searchQuery ? '🔍' : '📦'}
+                </div>
+                <h2 style={{ fontSize: '1.6rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
+                  {searchQuery ? `No stashes found matching "${searchQuery}"` : 'No Physical Locations Stashed Yet!'}
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '20px', maxWidth: '440px', margin: '0 auto 20px auto', fontWeight: 600, lineHeight: '1.4' }}>
+                  {searchQuery
+                    ? 'Try searching for another keyword or add a new physical location.'
+                    : "You haven't stashed any locations yet. Tag your car, work desk, coffee station, or garage workbench to get started."}
+                </p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {searchQuery ? (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="btn btn-sm btn-gold"
+                      style={{ padding: '10px 18px' }}
+                    >
+                      Clear Search Filter
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setShowAddLocation(true)}
+                        className="btn btn-primary"
+                        style={{ padding: '12px 24px', fontSize: '1.05rem' }}
+                      >
+                        <Plus size={20} />
+                        <span>+ Add Your First Location</span>
+                      </button>
+
+                      <button
+                        onClick={handleStartDemo}
+                        className="btn btn-gold"
+                        style={{ padding: '12px 20px', fontSize: '1rem' }}
+                      >
+                        <Sparkles size={16} />
+                        <span>Load Sample Locations</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="grid-stash">
+                {filteredLocations.map((loc) => (
+                  <LocationCard
+                    key={loc.id}
+                    location={loc}
+                    onOpenDetail={(location) => setSelectedLocation(location)}
+                    onEditLocation={(location) => setEditingLocation(location)}
+                    onShowQR={(location) => setQrLocation(location)}
+                    onShareStash={(location) => setShareLocation(location)}
+                    onDelete={handleDeleteLocation}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
       {/* Global Comprehensive Footer */}
       <Footer
-        onGoHome={() => setActiveView('home')}
-        onGoStashes={() => setActiveView('stashes')}
+        onGoHome={() => navigateToView('home')}
+        onGoStashes={() => navigateToView('stashes')}
         onOpenAddLocation={() => setShowAddLocation(true)}
         onOpenBackup={() => setShowBackup(true)}
       />
@@ -249,8 +276,8 @@ export const App: React.FC = () => {
       <MobileTabBar
         activeView={activeView}
         stashesCount={locations.length}
-        onGoHome={() => setActiveView('home')}
-        onGoStashes={() => setActiveView('stashes')}
+        onGoHome={() => navigateToView('home')}
+        onGoStashes={() => navigateToView('stashes')}
         onOpenScanner={() => setShowScanner(true)}
         onOpenAddLocation={() => setShowAddLocation(true)}
         onToggleSearch={() => setShowMobileSearch(!showMobileSearch)}
@@ -264,7 +291,7 @@ export const App: React.FC = () => {
           onSelectLocation={(loc) => {
             setShowScanner(false);
             setSelectedLocation(loc);
-            setActiveView('stashes');
+            navigateToView('stashes');
           }}
         />
       )}
