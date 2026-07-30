@@ -3,14 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    
+    <!-- iOS Web App Meta Tags & Touch Icon -->
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Space Paste" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Space Paste - Physical Location Memory & Local Stash Vault</title>
     <meta name="description" content="Space Paste seamlessly bridges your digital brain to real-world physical locations. Stash podcast episodes, cable guides, torque specs, and passwords directly to physical spots via instant web routes, QR stickers, or AI photo signatures." />
-    <meta name="theme-color" content="#FFF8E1" />
-    <script type="module" crossorigin src="/assets/index-2JH0l511.js"></script>
+    <meta name="theme-color" content="#C74800" />
+    <script type="module" crossorigin src="/assets/index-CN0BgIoN.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-CkDSyUZQ.css">
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- Register Service Worker for PWA Support -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration failed:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
