@@ -16,7 +16,6 @@ interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   showMobileSearch: boolean;
-  onToggleMobileSearch: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -52,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header" style={{ padding: '12px 0 16px 0', borderBottom: '2px dashed #CBD5E1', marginBottom: '16px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         
-        {/* Top App Brand & Navigation Row (Ultra-Compact on Mobile) */}
+        {/* Top App Brand & Navigation Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           
           {/* Logo & Brand Title */}
@@ -79,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs (Hidden on mobile as bottom dock takes over) */}
+          {/* Desktop Navigation Tabs */}
           <div className="desktop-nav-tabs" style={{ gap: '4px', backgroundColor: 'var(--bg-subtle)', padding: '3px', borderRadius: '10px', border: '1.5px solid #2A1B17' }}>
             <button
               onClick={onGoHome}
@@ -127,16 +126,18 @@ export const Header: React.FC<HeaderProps> = ({
 
         </div>
 
-        {/* Search Bar Row (Always visible on desktop, expandable on mobile) */}
-        {(showMobileSearch || window.innerWidth >= 640) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ flex: '1', position: 'relative' }}>
+        {/* Inline Compact Row: Search Bar (Not full width) + Scan & Add Location Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '4px' }}>
+          
+          {/* Compact Search Input */}
+          {(showMobileSearch || window.innerWidth >= 640) && (
+            <div style={{ flex: '0 1 320px', minWidth: '220px', position: 'relative' }}>
               <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               <input
                 ref={searchInputRef}
                 type="text"
                 aria-label="Search physical stashes, notes, cables, or links"
-                placeholder="Search stashes, notes, cables, links... (/)"
+                placeholder="Search stashes, notes... (/)"
                 value={searchQuery}
                 onChange={(e) => {
                   onSearchChange(e.target.value);
@@ -144,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 style={{
                   width: '100%',
-                  padding: '9px 12px 9px 36px',
+                  padding: '8px 12px 8px 36px',
                   borderRadius: '10px',
                   border: 'var(--border-thick)',
                   fontFamily: 'inherit',
@@ -154,20 +155,21 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
               />
             </div>
+          )}
+
+          {/* Desktop Toolbar Action Buttons Right Next To Search */}
+          <div className="desktop-toolbar" style={{ alignItems: 'center', gap: '8px' }}>
+            <button onClick={onOpenScanner} className="btn btn-accent">
+              <Camera size={16} />
+              <span>Scan & Match</span>
+            </button>
+
+            <button onClick={onOpenAddLocation} className="btn btn-primary">
+              <Plus size={16} />
+              <span>+ Add Location</span>
+            </button>
           </div>
-        )}
 
-        {/* Desktop Workspace Action Toolbar */}
-        <div className="desktop-toolbar" style={{ alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <button onClick={onOpenScanner} className="btn btn-accent">
-            <Camera size={16} />
-            <span>Scan & Match</span>
-          </button>
-
-          <button onClick={onOpenAddLocation} className="btn btn-primary">
-            <Plus size={16} />
-            <span>+ Add Location</span>
-          </button>
         </div>
 
       </div>

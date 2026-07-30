@@ -6,8 +6,6 @@ interface FooterProps {
   onGoStashes: () => void;
   onOpenAddLocation: () => void;
   onOpenBackup: () => void;
-  onOpenDocs: () => void;
-  onOpenMerch: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -15,8 +13,6 @@ export const Footer: React.FC<FooterProps> = ({
   onGoStashes,
   onOpenAddLocation,
   onOpenBackup,
-  onOpenDocs,
-  onOpenMerch,
 }) => {
   return (
     <footer
@@ -50,7 +46,7 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Column 2: Navigation Links */}
+          {/* Column 2: Vault Navigation */}
           <div>
             <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Vault Navigation
@@ -71,25 +67,15 @@ export const Footer: React.FC<FooterProps> = ({
                   ➕ Tag New Physical Location
                 </button>
               </li>
-              <li>
-                <button onClick={onOpenMerch} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  🛍️ Merch Portal (App is Free)
-                </button>
-              </li>
             </ul>
           </div>
 
-          {/* Column 3: Platform Resources */}
+          {/* Column 3: Platform Resources & Data */}
           <div>
             <h4 style={{ fontSize: '0.95rem', marginBottom: '12px', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Resources & Data
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem', fontWeight: 700 }}>
-              <li>
-                <button onClick={onOpenDocs} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                  📖 Launch Guide & Documentation
-                </button>
-              </li>
               <li>
                 <button onClick={onOpenBackup} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>
                   💾 Backup & Restore JSON Vault

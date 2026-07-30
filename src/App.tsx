@@ -8,8 +8,6 @@ import { LocationDetailModal } from './components/LocationDetailModal';
 import { QRPrintModal } from './components/QRPrintModal';
 import { BackupModal } from './components/BackupModal';
 import { ShareStashModal } from './components/ShareStashModal';
-import { MerchDropModal } from './components/MerchDropModal';
-import { DocumentationModal } from './components/DocumentationModal';
 import { LandingPage } from './components/LandingPage';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { Footer } from './components/Footer';
@@ -18,7 +16,7 @@ import { MobileTabBar } from './components/MobileTabBar';
 import type { PhysicalLocation, GeoCoords } from './types';
 import { getAllLocationsWithCounts, saveLocation, updateLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
 import { getCurrentPosition, sortLocationsByProximity } from './services/geo';
-import { ShoppingBag, BookOpen, Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [locations, setLocations] = useState<PhysicalLocation[]>([]);
@@ -26,7 +24,7 @@ export const App: React.FC = () => {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'home' | 'stashes'>('stashes');
 
-  // Search Filter State (Slack / Gmail Style Search)
+  // Search Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
@@ -35,8 +33,6 @@ export const App: React.FC = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [editingLocation, setEditingLocation] = useState<PhysicalLocation | null>(null);
   const [showBackup, setShowBackup] = useState(false);
-  const [showMerch, setShowMerch] = useState(false);
-  const [showDocs, setShowDocs] = useState(false);
   
   const [selectedLocation, setSelectedLocation] = useState<PhysicalLocation | null>(null);
   const [qrLocation, setQrLocation] = useState<PhysicalLocation | null>(null);
@@ -140,7 +136,7 @@ export const App: React.FC = () => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 14px 40px 14px' }}>
       
-      {/* Space Paste Header App Bar */}
+      {/* Space Paste Header App Bar with Compact Inline Search */}
       <Header
         onOpenScanner={() => setShowScanner(true)}
         onOpenAddLocation={() => setShowAddLocation(true)}
@@ -155,41 +151,7 @@ export const App: React.FC = () => {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         showMobileSearch={showMobileSearch}
-        onToggleMobileSearch={() => setShowMobileSearch(!showMobileSearch)}
       />
-
-      {/* Quick Merch, Docs & GitHub Bar (Desktop Only) */}
-      <div className="desktop-toolbar" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
-            <ShoppingBag size={14} />
-            <span>Merch Portal (App is Free)</span>
-          </button>
-
-          <button onClick={() => setShowDocs(true)} className="btn btn-sm">
-            <BookOpen size={14} />
-            <span>Launch Guide & Docs</span>
-          </button>
-
-          <a
-            href="https://github.com/shangle/space-paste"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-sm btn-brown"
-          >
-            <svg height="14" width="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-            </svg>
-            <span>GitHub Source</span>
-          </a>
-        </div>
-
-        {activeView === 'stashes' && (
-          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            {searchQuery ? `Search Results (${filteredLocations.length})` : `Physical Stashes (${locations.length})`}
-          </div>
-        )}
-      </div>
 
       {/* PWA App Install Banner with Snooze & Dismiss */}
       <PWAInstallBanner />
@@ -200,8 +162,6 @@ export const App: React.FC = () => {
           <LandingPage
             onStartDemo={handleStartDemo}
             onOpenAddLocation={() => setShowAddLocation(true)}
-            onOpenMerchDrop={() => setShowMerch(true)}
-            onOpenDocs={() => setShowDocs(true)}
           />
         ) : filteredLocations.length === 0 ? (
           /* Empty Search / Empty Stashes View */
@@ -283,8 +243,6 @@ export const App: React.FC = () => {
         onGoStashes={() => setActiveView('stashes')}
         onOpenAddLocation={() => setShowAddLocation(true)}
         onOpenBackup={() => setShowBackup(true)}
-        onOpenDocs={() => setShowDocs(true)}
-        onOpenMerch={() => setShowMerch(true)}
       />
 
       {/* Mobile App Bottom Navigation Dock */}
@@ -357,18 +315,6 @@ export const App: React.FC = () => {
         <BackupModal
           onClose={() => setShowBackup(false)}
           onRefreshData={loadLocations}
-        />
-      )}
-
-      {showMerch && (
-        <MerchDropModal
-          onClose={() => setShowMerch(false)}
-        />
-      )}
-
-      {showDocs && (
-        <DocumentationModal
-          onClose={() => setShowDocs(false)}
         />
       )}
 

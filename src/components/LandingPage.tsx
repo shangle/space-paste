@@ -1,20 +1,16 @@
 import React from 'react';
-import { Sparkles, MapPin, Package, Zap, ShoppingBag, BookOpen, Share2, QrCode, Lock } from 'lucide-react';
+import { Sparkles, MapPin, Package, Zap, Share2, QrCode, Lock } from 'lucide-react';
 import { sound } from '../services/sound';
 import { AppleTreeMemoryGraphic } from './AppleTreeMemoryGraphic';
 
 interface LandingPageProps {
   onStartDemo: () => void;
   onOpenAddLocation: () => void;
-  onOpenMerchDrop: () => void;
-  onOpenDocs: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onStartDemo,
   onOpenAddLocation,
-  onOpenMerchDrop,
-  onOpenDocs,
 }) => {
   return (
     <div style={{ padding: '8px 0 40px 0' }}>
@@ -71,15 +67,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <Package size={20} />
               <span>+ Create First Location</span>
-            </button>
-
-            <button
-              onClick={onOpenMerchDrop}
-              className="btn btn-gold"
-              style={{ padding: '13px 20px', fontSize: '1.05rem' }}
-            >
-              <ShoppingBag size={20} />
-              <span>Merch Portal</span>
             </button>
           </div>
 
@@ -156,7 +143,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* Feature Architecture Grid (Proton / Opera Level Specs) */}
-      <div style={{ backgroundColor: 'var(--bg-subtle)', border: 'var(--border-thick)', borderRadius: '20px', padding: '28px 20px', marginBottom: '40px' }}>
+      <div style={{ backgroundColor: 'var(--bg-subtle)', border: 'var(--border-thick)', borderRadius: '20px', padding: '28px 20px', marginBottom: '20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '1.6rem', marginBottom: '4px' }}>🔒 Privacy & Platform Architecture</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>
@@ -207,14 +194,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
         </div>
-      </div>
-
-      {/* Direct FAQ & Launch Documentation Trigger */}
-      <div style={{ textAlign: 'center' }}>
-        <button onClick={onOpenDocs} className="btn btn-brown" style={{ padding: '12px 24px', fontSize: '0.98rem' }}>
-          <BookOpen size={18} />
-          <span>Read Full Launch Documentation & FAQ</span>
-        </button>
       </div>
 
     </div>
