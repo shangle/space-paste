@@ -1,30 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" fill="none">
-  <!-- Outer Oval Badge Border -->
-  <ellipse cx="150" cy="100" rx="140" ry="90" fill="#FFF8E1" stroke="#5D4037" stroke-width="7"/>
-  <ellipse cx="150" cy="100" rx="130" ry="80" stroke="#00ACC1" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Rocket Exhaust Flame -->
+  <path d="M 22 46 Q 16 58 20 62 Q 28 58 26 46 Z" fill="#FFB300" stroke="#2A1B17" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 24 46 Q 20 54 22 58 Q 26 55 25 46 Z" fill="#C62828"/>
 
-  <!-- Ringed Planet -->
-  <circle cx="150" cy="62" r="22" fill="#F28C38" stroke="#5D4037" stroke-width="3"/>
-  <!-- Planet Ring -->
-  <ellipse cx="150" cy="62" rx="36" ry="10" fill="none" stroke="#00ACC1" stroke-width="5" transform="rotate(-15 150 62)"/>
+  <!-- Left Fin -->
+  <path d="M 22 36 L 10 46 L 20 48 Z" fill="#C62828" stroke="#2A1B17" stroke-width="2.5" stroke-linejoin="round"/>
 
-  <!-- Rocket Ship -->
-  <g transform="translate(210, 42) rotate(25) scale(0.85)">
-    <!-- Fiery Trail -->
-    <path d="M-15 12 L-35 8 L-22 18 L-40 22 L-20 26 Z" fill="#E53935"/>
-    <path d="M-12 14 L-26 12 L-18 18 L-28 20 Z" fill="#FDD835"/>
-    <!-- Rocket Body -->
-    <path d="M0 0 C15 5 25 15 28 25 C15 22 5 15 0 0 Z" fill="#FFF8E1" stroke="#5D4037" stroke-width="3"/>
-    <circle cx="14" cy="12" r="4" fill="#00ACC1" stroke="#5D4037" stroke-width="2"/>
-    <path d="M-4 18 L-12 28 L0 22 Z" fill="#E53935" stroke="#5D4037" stroke-width="2"/>
-  </g>
+  <!-- Right Fin -->
+  <path d="M 42 22 L 52 32 L 44 38 Z" fill="#C62828" stroke="#2A1B17" stroke-width="2.5" stroke-linejoin="round"/>
 
-  <!-- Sparkle Stars -->
-  <path d="M60 45 L62 52 L69 54 L62 56 L60 63 L58 56 L51 54 L58 52 Z" fill="#F28C38" stroke="#5D4037" stroke-width="1.5"/>
-  <path d="M90 35 L91 40 L96 41 L91 42 L90 47 L89 42 L84 41 L89 40 Z" fill="#E53935" stroke="#5D4037" stroke-width="1.5"/>
-  <path d="M225 110 L226 114 L230 115 L226 116 L225 120 L224 116 L220 115 L224 114 Z" fill="#FDD835" stroke="#5D4037" stroke-width="1.5"/>
+  <!-- Main Rocket Fuselage -->
+  <path d="M 48 14 Q 38 6 22 22 Q 16 34 22 44 Q 32 50 44 44 Q 60 28 48 14 Z" fill="#C74800" stroke="#2A1B17" stroke-width="3" stroke-linejoin="round"/>
 
-  <!-- Stylized Retro Psychedelic Text "Space Paste" -->
-  <text x="150" y="125" text-anchor="middle" font-family="'Shrikhand', cursive, sans-serif" font-size="44" font-weight="900" fill="#F28C38" stroke="#5D4037" stroke-width="3" letter-spacing="1">Space</text>
-  <text x="150" y="162" text-anchor="middle" font-family="'Shrikhand', cursive, sans-serif" font-size="36" font-weight="900" fill="#5D4037" letter-spacing="2">Paste</text>
+  <!-- Rocket Nose Cone -->
+  <path d="M 48 14 Q 54 8 58 6 Q 56 10 48 14 Z" fill="#FFF8E1" stroke="#2A1B17" stroke-width="2"/>
+
+  <!-- Porthole Window Outer Ring -->
+  <circle cx="34" cy="26" r="7" fill="#FFF8E1" stroke="#2A1B17" stroke-width="2.5"/>
+  <!-- Porthole Window Glass -->
+  <circle cx="34" cy="26" r="4.5" fill="#006978"/>
+  <!-- Glass Reflection Highlight -->
+  <circle cx="32.5" cy="24.5" r="1.5" fill="#FFFFFF"/>
 </svg>
