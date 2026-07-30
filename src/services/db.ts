@@ -37,6 +37,21 @@ export async function getAllLocations(): Promise<PhysicalLocation[]> {
   });
 }
 
+export async function getAllLocationsWithCounts(): Promise<PhysicalLocation[]> {
+  const locations = await getAllLocations();
+  const items = await getAllItems();
+
+  const countsMap = new Map<string, number>();
+  for (const item of items) {
+    countsMap.set(item.locationId, (countsMap.get(item.locationId) || 0) + 1);
+  }
+
+  return locations.map((loc) => ({
+    ...loc,
+    itemCount: countsMap.get(loc.id) || 0,
+  }));
+}
+
 export async function getLocationById(id: string): Promise<PhysicalLocation | undefined> {
   const db = await initDB();
   return new Promise((resolve, reject) => {

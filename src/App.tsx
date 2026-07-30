@@ -13,7 +13,7 @@ import { DocumentationModal } from './components/DocumentationModal';
 import { LandingPage } from './components/LandingPage';
 
 import type { PhysicalLocation, GeoCoords } from './types';
-import { getAllLocations, saveLocation, updateLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
+import { getAllLocationsWithCounts, saveLocation, updateLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
 import { getCurrentPosition, sortLocationsByProximity } from './services/geo';
 import { ShoppingBag, BookOpen, Plus, Sparkles } from 'lucide-react';
 
@@ -41,7 +41,7 @@ export const App: React.FC = () => {
   // Initial setup
   useEffect(() => {
     async function init() {
-      const list = await getAllLocations();
+      const list = await getAllLocationsWithCounts();
       
       // Check URL Path routing (e.g. spacepaste.app/car or spacepaste.app/#/car)
       const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase() || window.location.hash.replace(/^#\/?/, '').toLowerCase();
@@ -71,7 +71,7 @@ export const App: React.FC = () => {
   }, []);
 
   const loadLocations = async () => {
-    const list = await getAllLocations();
+    const list = await getAllLocationsWithCounts();
     setLocations(sortLocationsByProximity(list, currentCoords));
   };
 
