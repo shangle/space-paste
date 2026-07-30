@@ -22,7 +22,7 @@ export const App: React.FC = () => {
   const [locations, setLocations] = useState<PhysicalLocation[]>([]);
   const [currentCoords, setCurrentCoords] = useState<GeoCoords | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'home' | 'stashes'>('stashes');
+  const [activeView, setActiveView] = useState<'home' | 'stashes'>('home');
 
   // Search Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,7 +38,7 @@ export const App: React.FC = () => {
   const [qrLocation, setQrLocation] = useState<PhysicalLocation | null>(null);
   const [shareLocation, setShareLocation] = useState<PhysicalLocation | null>(null);
 
-  // Synchronize View State & Hash Routing (`/#/stashes` vs `/#/home` or `/stashes`)
+  // Synchronize View State & Hash Routing (`/#/stashes` vs `/#/home`)
   const navigateToView = (view: 'home' | 'stashes') => {
     setActiveView(view);
     if (view === 'stashes') {
@@ -56,16 +56,10 @@ export const App: React.FC = () => {
       // Parse URL Path & Hash routes
       const pathSlug = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase() || window.location.hash.replace(/^#\/?/, '').toLowerCase();
       
-      if (pathSlug === 'home' || pathSlug === '') {
-        if (list.length === 0) {
-          setActiveView('home');
-        } else if (pathSlug === 'home') {
-          setActiveView('home');
-        } else {
-          setActiveView('stashes');
-        }
-      } else if (pathSlug === 'stashes' || pathSlug === 'dashboard') {
+      if (pathSlug === 'stashes' || pathSlug === 'dashboard') {
         setActiveView('stashes');
+      } else if (pathSlug === 'home' || pathSlug === '') {
+        setActiveView('home');
       } else {
         // Direct location route lookup (e.g. spacepaste.app/car)
         const matched = list.find((loc) => {
@@ -81,7 +75,7 @@ export const App: React.FC = () => {
           setSelectedLocation(matched);
           setActiveView('stashes');
         } else {
-          setActiveView('stashes');
+          setActiveView('home');
         }
       }
 
