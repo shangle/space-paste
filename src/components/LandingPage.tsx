@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, MapPin, Package, Zap, ShoppingBag, BookOpen, Share2, QrCode, Lock } from 'lucide-react';
 import { sound } from '../services/sound';
+import { AppleTreeMemoryGraphic } from './AppleTreeMemoryGraphic';
 
 interface LandingPageProps {
   onStartDemo: () => void;
@@ -84,6 +85,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         </div>
       </div>
+
+      {/* Apple Tree Physical Location Memory Concept Graphic */}
+      <AppleTreeMemoryGraphic />
 
       {/* Real-World Use Case Scenarios (Podcast Car Story & Workshop) */}
       <div style={{ marginBottom: '40px' }}>
