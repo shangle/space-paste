@@ -19,13 +19,14 @@ export const LocationCard: React.FC<LocationCardProps> = ({
   onShareStash,
   onDelete,
 }) => {
-  // Only show distance badge if GPS coords exist and distance is a finite number
-  const showDistance =
-    location.coords !== undefined &&
-    location.distanceMeters !== undefined &&
-    isFinite(location.distanceMeters);
+  // Strict distance validation: must have valid coords AND a finite distanceMeters number
+  const hasValidDistance =
+    Boolean(location.coords) &&
+    typeof location.distanceMeters === 'number' &&
+    isFinite(location.distanceMeters) &&
+    !isNaN(location.distanceMeters);
 
-  const distanceText = showDistance
+  const distanceText = hasValidDistance
     ? location.distanceMeters! < 1000
       ? `${Math.round(location.distanceMeters!)}m away`
       : `${(location.distanceMeters! / 1000).toFixed(1)}km away`
@@ -68,7 +69,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
               </h2>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                {showDistance && distanceText && (
+                {hasValidDistance && distanceText && (
                   <span className="badge badge-orange">📍 {distanceText}</span>
                 )}
                 {location.photoSignature ? (

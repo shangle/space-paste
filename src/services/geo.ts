@@ -27,6 +27,7 @@ export function calculateHaversineDistance(
  * Formats distance in meters into human-friendly string (e.g. "12m away", "450m away", "1.4 km away").
  */
 export function formatDistance(meters: number): string {
+  if (!isFinite(meters) || isNaN(meters)) return '';
   if (meters < 15) {
     return '📍 Here now (<15m)';
   }
@@ -45,14 +46,14 @@ export function sortLocationsByProximity(
 ): PhysicalLocation[] {
   if (!currentCoords) {
     // Fall back to sorting by updated time if GPS is not active
-    return [...locations].sort(
+    return [...locations].map(loc => ({ ...loc, distanceMeters: undefined })).sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }
 
   const calculated = locations.map((loc) => {
-    if (!loc.coords) {
-      return { ...loc, distanceMeters: Infinity };
+    if (!loc.coords || !isFinite(loc.coords.latitude) || !isFinite(loc.coords.longitude)) {
+      return { ...loc, distanceMeters: undefined };
     }
     const dist = calculateHaversineDistance(
       currentCoords.latitude,
@@ -60,10 +61,14 @@ export function sortLocationsByProximity(
       loc.coords.latitude,
       loc.coords.longitude
     );
-    return { ...loc, distanceMeters: dist };
+    return { ...loc, distanceMeters: isFinite(dist) ? dist : undefined };
   });
 
-  return calculated.sort((a, b) => (a.distanceMeters ?? Infinity) - (b.distanceMeters ?? Infinity));
+  return calculated.sort((a, b) => {
+    const dA = a.distanceMeters ?? Number.MAX_SAFE_INTEGER;
+    const dB = b.distanceMeters ?? Number.MAX_SAFE_INTEGER;
+    return dA - dB;
+  });
 }
 
 /**
