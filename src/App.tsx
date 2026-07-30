@@ -11,6 +11,7 @@ import { ShareStashModal } from './components/ShareStashModal';
 import { MerchDropModal } from './components/MerchDropModal';
 import { DocumentationModal } from './components/DocumentationModal';
 import { LandingPage } from './components/LandingPage';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
 
 import type { PhysicalLocation, GeoCoords } from './types';
 import { getAllLocationsWithCounts, saveLocation, updateLocation, deleteLocation, seedDemoDataIfEmpty } from './services/db';
@@ -172,6 +173,9 @@ export const App: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* PWA App Install Banner with Snooze & Dismiss */}
+      <PWAInstallBanner />
 
       {/* Main View Area */}
       <main>
