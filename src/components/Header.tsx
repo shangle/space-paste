@@ -1,5 +1,5 @@
-import React from 'react';
-import { Camera, Plus, MapPin, Database, Home, Package } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Camera, Plus, MapPin, Database, Home, Package, Search } from 'lucide-react';
 import type { GeoCoords } from '../types';
 
 interface HeaderProps {
@@ -13,6 +13,8 @@ interface HeaderProps {
   currentCoords: GeoCoords | null;
   geoError: string | null;
   onRefreshGeo: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,17 +28,35 @@ export const Header: React.FC<HeaderProps> = ({
   currentCoords,
   geoError,
   onRefreshGeo,
+  searchQuery,
+  onSearchChange,
 }) => {
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Global Keyboard Shortcut: '/' or 'Cmd+K' to focus search bar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <header style={{ padding: '16px 0 20px 0', borderBottom: '2px dashed #CBD5E1', marginBottom: '20px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         
-        {/* Brand & Logo Row */}
+        {/* Top App Brand & Navigation Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          
+          {/* Logo & Brand Title */}
           <div
             onClick={onGoHome}
             style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-            title="Click to go to Home Landing Page"
+            title="Space Paste - Home"
           >
             <img
               src="/logo.svg"
@@ -56,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Home / Stashes View Navigation Tabs */}
+          {/* Navigation Tabs (Renamed "Home Pitch" -> "Home") */}
           <div style={{ display: 'flex', gap: '4px', backgroundColor: 'var(--bg-subtle)', padding: '3px', borderRadius: '10px', border: '1.5px solid #2A1B17' }}>
             <button
               onClick={onGoHome}
@@ -64,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
               style={{ border: activeView === 'home' ? 'var(--border-thick)' : 'none', boxShadow: 'none' }}
             >
               <Home size={14} />
-              <span>Home Pitch</span>
+              <span>Home</span>
             </button>
 
             <button
@@ -76,40 +96,69 @@ export const Header: React.FC<HeaderProps> = ({
               <span>My Stashes ({stashesCount})</span>
             </button>
           </div>
+
         </div>
 
-        {/* Action Controls Toolbar */}
-        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+        {/* Workspace Toolbar: Search Bar + Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           
-          <button onClick={onOpenScanner} className="btn btn-accent" style={{ flex: '1 1 140px' }}>
-            <Camera size={18} />
-            <span>Scan & Match</span>
-          </button>
+          {/* Global Search Input (Slack/Gmail Style Quick Search) */}
+          <div style={{ flex: '1 1 240px', position: 'relative' }}>
+            <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder="Search stashes, notes, cables, links... (/)"
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                if (activeView !== 'stashes') onGoStashes();
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px 9px 36px',
+                borderRadius: '10px',
+                border: 'var(--border-thick)',
+                fontFamily: 'inherit',
+                fontSize: '0.88rem',
+                backgroundColor: '#FFFFFF',
+                color: 'var(--text-primary)',
+              }}
+            />
+          </div>
 
-          <button onClick={onOpenAddLocation} className="btn btn-primary" style={{ flex: '1 1 140px' }}>
-            <Plus size={18} />
-            <span>+ Add Location</span>
-          </button>
+          {/* Action Control Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={onOpenScanner} className="btn btn-accent">
+              <Camera size={16} />
+              <span>Scan & Match</span>
+            </button>
 
-          <button
-            onClick={onRefreshGeo}
-            className="btn btn-sm"
-            style={{
-              backgroundColor: currentCoords ? '#ECFDF5' : '#FFFBEB',
-              borderColor: '#2A1B17',
-              color: '#2A1B17',
-            }}
-            title={geoError || 'Click to update GPS position'}
-          >
-            <MapPin size={14} color={currentCoords ? '#047857' : '#B45309'} />
-            <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>
-              {currentCoords ? 'GPS Active' : 'GPS Idle'}
-            </span>
-          </button>
+            <button onClick={onOpenAddLocation} className="btn btn-primary">
+              <Plus size={16} />
+              <span>+ Add Location</span>
+            </button>
 
-          <button onClick={onOpenBackup} className="btn btn-sm" title="Data Backup & Export">
-            <Database size={14} />
-          </button>
+            <button
+              onClick={onRefreshGeo}
+              className="btn btn-sm"
+              style={{
+                backgroundColor: currentCoords ? '#ECFDF5' : '#FFFBEB',
+                borderColor: '#2A1B17',
+                color: '#2A1B17',
+              }}
+              title={geoError || 'Click to update GPS position'}
+            >
+              <MapPin size={14} color={currentCoords ? '#047857' : '#B45309'} />
+              <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>
+                {currentCoords ? 'GPS Active' : 'GPS Idle'}
+              </span>
+            </button>
+
+            <button onClick={onOpenBackup} className="btn btn-sm" title="Data Backup & Export">
+              <Database size={14} />
+            </button>
+          </div>
 
         </div>
 

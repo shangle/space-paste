@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Pin, Trash2, ExternalLink, Copy, Check, QrCode, Sparkles } from 'lucide-react';
+import { X, Plus, Pin, Trash2, ExternalLink, Copy, Check, QrCode, Sparkles, Pencil } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import type { PhysicalLocation, StashItem, ItemType, ChecklistItem } from '../types';
 import { getItemsByLocation, saveItem, deleteItem } from '../services/db';
@@ -8,6 +8,7 @@ import { sound } from '../services/sound';
 interface LocationDetailModalProps {
   location: PhysicalLocation;
   onClose: () => void;
+  onEditLocation: (loc: PhysicalLocation) => void;
   onShowQR: (loc: PhysicalLocation) => void;
   onUpdateLocationItemCount: () => void;
 }
@@ -15,6 +16,7 @@ interface LocationDetailModalProps {
 export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
   location,
   onClose,
+  onEditLocation,
   onShowQR,
   onUpdateLocationItemCount,
 }) => {
@@ -160,9 +162,12 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button onClick={() => onEditLocation(location)} className="btn btn-sm" title="Edit Vault Details">
+              <Pencil size={15} /> Edit
+            </button>
             <button onClick={() => onShowQR(location)} className="btn btn-sm" title="Print QR Code">
-              <QrCode size={16} /> QR Sticker
+              <QrCode size={15} /> Sticker
             </button>
             <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
               <X size={18} />
@@ -208,7 +213,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
               borderRadius: '14px',
               border: 'var(--border-thick)',
               marginBottom: '22px',
-              animation: 'popIn 0.2s ease',
             }}
           >
             <h4 style={{ fontSize: '1.05rem', marginBottom: '12px' }}>➕ Stash a New Item</h4>
@@ -239,7 +243,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
               <input
                 type="text"
                 required
-                placeholder="Item Title (e.g. Spare Keys, WiFi Password, Cable Guide)"
+                placeholder="Item Title (e.g. Current Podcast, Cable Guide, WiFi Pass)"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 style={{
@@ -281,7 +285,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                 <input
                   type="url"
                   required
-                  placeholder="https://example.com/guide-or-doc"
+                  placeholder="https://example.com/guide-or-podcast"
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                   style={{
@@ -333,7 +337,7 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   className="btn btn-sm"
                   style={{ marginTop: '4px', fontSize: '0.78rem' }}
                 >
-                  + Add Another Task
+                  + Add Task
                 </button>
               </div>
             )}
@@ -367,7 +371,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                     borderRadius: '14px',
                     padding: '16px',
                     boxShadow: 'var(--shadow-tactile-sm)',
-                    transition: 'all 0.15s ease',
                   }}
                 >
                   {/* Top Item Row */}
@@ -413,13 +416,13 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                   )}
 
                   {item.type === 'link' && item.content && (
-                    <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <a
                         href={item.content}
                         target="_blank"
                         rel="noreferrer"
-                        className="btn btn-sm btn-navy"
-                        style={{ textDecoration: 'none', color: '#FFFFFF', backgroundColor: 'var(--color-deep-brown)' }}
+                        className="btn btn-sm btn-brown"
+                        style={{ textDecoration: 'none' }}
                       >
                         <span>Open Link</span>
                         <ExternalLink size={14} />
@@ -450,7 +453,6 @@ export const LocationDetailModal: React.FC<LocationDetailModalProps> = ({
                               borderRadius: '8px',
                               backgroundColor: c.completed ? '#ECFDF5' : 'var(--bg-subtle)',
                               border: '1px solid #2A1B17',
-                              transition: 'all 0.15s ease',
                             }}
                           >
                             <input

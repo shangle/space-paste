@@ -1,10 +1,11 @@
 import React from 'react';
-import { QrCode, Share2, Trash2, ArrowRight } from 'lucide-react';
+import { QrCode, Share2, Trash2, ArrowRight, Pencil } from 'lucide-react';
 import type { PhysicalLocation } from '../types';
 
 interface LocationCardProps {
   location: PhysicalLocation;
   onOpenDetail: (location: PhysicalLocation) => void;
+  onEditLocation: (location: PhysicalLocation) => void;
   onShowQR: (location: PhysicalLocation) => void;
   onShareStash: (location: PhysicalLocation) => void;
   onDelete: (id: string) => void;
@@ -13,6 +14,7 @@ interface LocationCardProps {
 export const LocationCard: React.FC<LocationCardProps> = ({
   location,
   onOpenDetail,
+  onEditLocation,
   onShowQR,
   onShareStash,
   onDelete,
@@ -74,22 +76,41 @@ export const LocationCard: React.FC<LocationCardProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(location.id);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-muted)',
-              padding: '4px',
-            }}
-            title="Delete Stash"
-          >
-            <Trash2 size={16} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditLocation(location);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                padding: '4px',
+              }}
+              title="Edit Location Stash"
+            >
+              <Pencil size={16} />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(location.id);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                padding: '4px',
+              }}
+              title="Delete Stash"
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Location Description */}
@@ -121,7 +142,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
           <button
             onClick={() => onShareStash(location)}
             className="btn btn-sm btn-gold"
-            title="Share Stash via Sound Tone / Link / QR"
+            title="Share Stash Route or QR"
           >
             <Share2 size={14} />
           </button>
