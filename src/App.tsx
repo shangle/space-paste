@@ -109,7 +109,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px 20px' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 14px 40px 14px' }}>
       
       {/* Space Paste Header */}
       <Header
@@ -126,8 +126,8 @@ export const App: React.FC = () => {
       />
 
       {/* Quick Merch & Docs Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button onClick={() => setShowMerch(true)} className="btn btn-sm btn-gold">
             <ShoppingBag size={14} />
             <span>Merch Portal (App is Free)</span>
@@ -140,7 +140,7 @@ export const App: React.FC = () => {
         </div>
 
         {activeView === 'stashes' && (
-          <div style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             Physical Stashes ({locations.length})
           </div>
         )}
@@ -156,43 +156,43 @@ export const App: React.FC = () => {
             onOpenDocs={() => setShowDocs(true)}
           />
         ) : locations.length === 0 ? (
-          /* Empty Stashes Screen with Big Add Location Callout */
+          /* Empty Stashes Screen */
           <div
             style={{
-              padding: '60px 24px',
+              padding: '40px 18px',
               textAlign: 'center',
               backgroundColor: 'var(--bg-card)',
-              borderRadius: '24px',
+              borderRadius: '20px',
               border: 'var(--border-thick)',
-              boxShadow: 'var(--shadow-tactile-lg)',
-              margin: '20px 0',
+              boxShadow: 'var(--shadow-tactile)',
+              margin: '16px 0',
             }}
           >
-            <div style={{ fontSize: '3.8rem', marginBottom: '12px' }}>📦</div>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: '3.2rem', marginBottom: '10px' }}>📦</div>
+            <h2 style={{ fontSize: '1.6rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
               No Physical Locations Stashed Yet!
             </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', marginBottom: '24px', maxWidth: '460px', margin: '0 auto 24px auto', fontWeight: 600, lineHeight: '1.45' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '20px', maxWidth: '440px', margin: '0 auto 20px auto', fontWeight: 600, lineHeight: '1.4' }}>
               You haven't stashed any locations yet. Tag your car, work desk, coffee station, or garage workbench to get started.
             </p>
             
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <button
                 onClick={() => setShowAddLocation(true)}
                 className="btn btn-primary"
-                style={{ padding: '14px 28px', fontSize: '1.1rem' }}
+                style={{ padding: '12px 24px', fontSize: '1.05rem' }}
               >
-                <Plus size={22} />
-                <span>+ Add Your First Physical Location</span>
+                <Plus size={20} />
+                <span>+ Add Your First Location</span>
               </button>
 
               <button
                 onClick={handleStartDemo}
                 className="btn btn-gold"
-                style={{ padding: '14px 22px', fontSize: '1.05rem' }}
+                style={{ padding: '12px 20px', fontSize: '1rem' }}
               >
-                <Sparkles size={18} />
-                <span>Load Sample Demo Locations</span>
+                <Sparkles size={16} />
+                <span>Load Sample Locations</span>
               </button>
             </div>
           </div>
@@ -252,14 +252,6 @@ export const App: React.FC = () => {
         <ShareStashModal
           location={shareLocation}
           onClose={() => setShareLocation(null)}
-          onSelectDetectedLocation={(code) => {
-            const loc = locations.find((l) => l.code === code || l.id === code || code.includes(l.id));
-            if (loc) {
-              setShareLocation(null);
-              setSelectedLocation(loc);
-              setActiveView('stashes');
-            }
-          }}
         />
       )}
 

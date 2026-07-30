@@ -1,80 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Radio, QrCode, Link as LinkIcon, Share, Volume2, Mic, Check } from 'lucide-react';
+import { X, QrCode, Link as LinkIcon, Share, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import type { PhysicalLocation } from '../types';
-import { sonicShare } from '../services/sonicShare';
 import { sound } from '../services/sound';
 
 interface ShareStashModalProps {
   location: PhysicalLocation;
   onClose: () => void;
-  onSelectDetectedLocation: (code: string) => void;
 }
 
 export const ShareStashModal: React.FC<ShareStashModalProps> = ({
   location,
   onClose,
-  onSelectDetectedLocation,
 }) => {
-  const [activeTab, setActiveTab] = useState<'sonic' | 'link' | 'qr'>('sonic');
-  
-  // Sonic FSK Broadcasting state
-  const [broadcasting, setBroadcasting] = useState(false);
-
-  // Sonic FSK Receiving state
-  const [listening, setListening] = useState(false);
-
-  // Direct Link Copy state
+  const [activeTab, setActiveTab] = useState<'link' | 'qr'>('link');
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   const directUrl = `https://spacepaste.app/${location.id}`;
 
   useEffect(() => {
-    // Generate QR Data URL
     QRCode.toDataURL(directUrl, { width: 280, margin: 2, color: { dark: '#2A1B17', light: '#FFF8E1' } })
       .then(setQrDataUrl)
       .catch(() => {});
-
-    return () => {
-      if (listening) {
-        sonicShare.stopListening();
-      }
-    };
   }, [location.id]);
-
-  const handleToggleBroadcast = async () => {
-    if (broadcasting) {
-      setBroadcasting(false);
-    } else {
-      setBroadcasting(true);
-      sound.playScanSuccess();
-      try {
-        await sonicShare.transmitCode(location.code);
-      } finally {
-        setBroadcasting(false);
-      }
-    }
-  };
-
-  const handleToggleListen = async () => {
-    if (listening) {
-      sonicShare.stopListening();
-      setListening(false);
-    } else {
-      setListening(true);
-      try {
-        await sonicShare.startListening((detectedCode: string) => {
-          sound.playScanSuccess();
-          sonicShare.stopListening();
-          setListening(false);
-          onSelectDetectedLocation(detectedCode);
-        });
-      } catch {
-        setListening(false);
-      }
-    }
-  };
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(directUrl);
@@ -97,14 +46,14 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '580px', padding: '24px' }}>
+      <div className="modal-content">
         
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '2.5px dashed #2A1B17', paddingBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '2px dashed #2A1B17', paddingBottom: '12px' }}>
           <div>
-            <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)' }}>Share {location.name} Stash</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.86rem', fontWeight: 600 }}>
-              Modular sound signal, direct link, or QR code
+            <h2 style={{ fontSize: '1.3rem', color: 'var(--text-primary)' }}>Share {location.name}</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', fontWeight: 600 }}>
+              Share direct URL route or print QR code sticker
             </p>
           </div>
           <button onClick={onClose} className="btn btn-sm" style={{ padding: '6px', borderRadius: '50%' }}>
@@ -113,19 +62,7 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
         </div>
 
         {/* Tab Switcher */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
-          <button
-            onClick={() => setActiveTab('sonic')}
-            className={`btn btn-sm ${activeTab === 'sonic' ? 'btn-primary' : ''}`}
-            style={{
-              flex: 1,
-              backgroundColor: activeTab === 'sonic' ? 'var(--color-astro-turquoise)' : 'var(--bg-card)',
-              color: activeTab === 'sonic' ? '#FFFFFF' : 'var(--text-primary)',
-            }}
-          >
-            <Radio size={15} /> Acoustic Tone
-          </button>
-
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <button
             onClick={() => setActiveTab('link')}
             className={`btn btn-sm ${activeTab === 'link' ? 'btn-primary' : ''}`}
@@ -135,7 +72,7 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
               color: activeTab === 'link' ? '#FFFFFF' : 'var(--text-primary)',
             }}
           >
-            <LinkIcon size={15} /> Direct Link
+            <LinkIcon size={15} /> Direct Link Route
           </button>
 
           <button
@@ -147,100 +84,56 @@ export const ShareStashModal: React.FC<ShareStashModalProps> = ({
               color: activeTab === 'qr' ? '#FFFFFF' : 'var(--text-primary)',
             }}
           >
-            <QrCode size={15} /> QR Code
+            <QrCode size={15} /> QR Code Sticker
           </button>
         </div>
 
-        {/* Sonic Sound Signal Tab */}
-        {activeTab === 'sonic' && (
-          <div style={{ padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '1.05rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Volume2 color="var(--color-orbit-orange)" size={20} /> Acoustic Sound Pulse Transceiver
-            </h4>
-            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: '1.45', marginBottom: '16px', fontWeight: 600 }}>
-              Space Paste uses Frequency Shift Keying (FSK) audio pulses to transmit stash location codes directly through device speakers & microphones!
-            </p>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <button
-                onClick={handleToggleBroadcast}
-                className={`btn ${broadcasting ? 'btn-red' : 'btn-accent'}`}
-                style={{ padding: '12px' }}
-              >
-                <Volume2 size={18} />
-                <span>{broadcasting ? 'Transmitting...' : '🔊 Broadcast Tone'}</span>
-              </button>
-
-              <button
-                onClick={handleToggleListen}
-                className={`btn ${listening ? 'btn-red' : 'btn-gold'}`}
-                style={{ padding: '12px' }}
-              >
-                <Mic size={18} />
-                <span>{listening ? 'Stop Listening' : '🎙️ Receive Tone'}</span>
-              </button>
-            </div>
-
-            {broadcasting && (
-              <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#FFFDE7', borderRadius: '8px', border: '1.5px solid #FFB300', textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: '#C74800' }}>
-                📡 Transmitting sound pulse payload... Bring receiving phone nearby!
-              </div>
-            )}
-
-            {listening && (
-              <div style={{ marginTop: '12px', padding: '10px', backgroundColor: '#ECFDF5', borderRadius: '8px', border: '1.5px solid #047857', textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: '#047857' }}>
-                🎙️ Listening for incoming acoustic stash signals...
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Direct Link Tab */}
         {activeTab === 'link' && (
-          <div style={{ padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
+          <div style={{ padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '12px', border: 'var(--border-thick)' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 800, display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>
               Direct Stash URL Route:
             </label>
             
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
               <input
                 type="text"
                 readOnly
                 value={directUrl}
                 style={{
-                  flex: 1,
+                  flex: '1 1 180px',
                   padding: '10px 12px',
                   borderRadius: '10px',
                   border: '1.5px solid #2A1B17',
                   fontFamily: 'monospace',
-                  fontSize: '0.9rem',
+                  fontSize: '0.88rem',
                   backgroundColor: '#FFFFFF',
                   color: 'var(--text-primary)',
                 }}
               />
-              <button onClick={handleCopyLink} className="btn btn-accent">
+              <button onClick={handleCopyLink} className="btn btn-accent" style={{ flexShrink: 0 }}>
                 {copied ? <Check size={16} /> : <LinkIcon size={16} />}
                 <span>{copied ? 'Copied!' : 'Copy'}</span>
               </button>
             </div>
 
             <button onClick={handleNativeShare} className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>
-              <Share size={16} /> Share via Phone App Sheet
+              <Share size={16} /> Share via Native Device Sheet
             </button>
           </div>
         )}
 
         {/* QR Code Tab */}
         {activeTab === 'qr' && (
-          <div style={{ textAlign: 'center', padding: '18px', backgroundColor: 'var(--bg-subtle)', borderRadius: '14px', border: 'var(--border-thick)', marginBottom: '16px' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '12px', border: 'var(--border-thick)' }}>
             {qrDataUrl && (
               <img
                 src={qrDataUrl}
                 alt="QR Code"
-                style={{ width: '200px', height: '200px', borderRadius: '12px', border: 'var(--border-thick)', marginBottom: '12px' }}
+                style={{ width: '180px', height: '180px', borderRadius: '12px', border: 'var(--border-thick)', marginBottom: '12px' }}
               />
             )}
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
               Scan this QR code with any camera phone to open {location.name} vault instantly.
             </p>
           </div>

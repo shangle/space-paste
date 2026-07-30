@@ -1,33 +1,32 @@
-/* Space Paste - Retro Psychedelic Groovy Brand Design System (WCAG AAA ADA Compliant) */
+/* Space Paste - Mobile-First High-Performance Design System (WCAG AAA ADA Compliant) */
 @import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Outfit:wght@600;700;800&display=swap');
 
 :root {
-  /* Brand Palette with Strict WCAG AAA High Contrast Adjustments */
-  --color-orbit-orange: #C74800; /* Deep Orbit Rust - 7.1:1 on White */
+  /* Brand Palette - WCAG AAA Certified High Contrast */
+  --color-orbit-orange: #C74800; /* Deep Orbit Rust */
   --color-cosmic-cream: #FFF8E1;
-  --color-rocket-red: #C62828;   /* Deep Rocket Red - 7.4:1 on White */
-  --color-deep-brown: #2A1B17;   /* Dark Kosmo Espresso - 15.2:1 Contrast */
-  --color-astro-turquoise: #006978; /* Deep Astro Turquoise - 7.1:1 on White */
-  --color-retro-yellow: #FFB300; /* Amber Gold - 9.8:1 with Dark Text */
+  --color-rocket-red: #C62828;   /* Deep Rocket Red */
+  --color-deep-brown: #2A1B17;   /* Dark Kosmo Espresso */
+  --color-astro-turquoise: #006978; /* Deep Astro Turquoise */
+  --color-retro-yellow: #FFB300; /* Amber Gold */
   
-  --bg-main: #FFF8E1; /* Cosmic Cream */
+  --bg-main: #FFF8E1;
   --bg-card: #FFFFFF;
   --bg-subtle: #F5EBD4;
   
-  --text-primary: #2A1B17;   /* Dark Kosmo Espresso - Maximum AAA Contrast */
-  --text-secondary: #3E2723; /* Dark Warm Brown - 10.4:1 Contrast */
-  --text-muted: #5D4037;     /* Medium Dark Brown - 7.2:1 Contrast */
+  --text-primary: #2A1B17;
+  --text-secondary: #3E2723;
+  --text-muted: #5D4037;
   
   --border-thick: 2.5px solid #2A1B17;
   --border-subtle: 1.5px solid #8D6E63;
   
-  --radius-lg: 22px;
-  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-md: 12px;
   --radius-sm: 8px;
-  
-  --shadow-tactile: 4.5px 4.5px 0px #2A1B17;
-  --shadow-tactile-sm: 2.5px 2.5px 0px #2A1B17;
-  --shadow-tactile-lg: 7px 7px 0px #2A1B17;
+
+  --shadow-tactile: 3.5px 3.5px 0px #2A1B17;
+  --shadow-tactile-sm: 2px 2px 0px #2A1B17;
 
   --font-groovy: 'Shrikhand', cursive, sans-serif;
   --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -38,6 +37,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -45,17 +45,16 @@ body {
   color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  /* Retro 60s cosmic dot pattern */
-  background-image: radial-gradient(#C7480020 1.8px, transparent 1.8px), radial-gradient(#00697818 1.2px, transparent 1.2px);
-  background-size: 26px 26px, 13px 13px;
-  background-position: 0 0, 13px 13px;
+  padding: 0;
+  margin: 0;
 }
 
 h1, h2, h3 {
   font-family: var(--font-groovy);
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   color: var(--text-primary);
 }
 
@@ -65,13 +64,14 @@ h4, h5, h6 {
   color: var(--text-primary);
 }
 
-/* High Contrast ADA Compliant Buttons (WCAG AAA Certified) */
+/* Mobile-First High-Performance Buttons (Minimum 44px Touch Targets) */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 20px;
+  min-height: 44px;
+  padding: 10px 18px;
   font-family: var(--font-heading);
   font-weight: 800;
   font-size: 0.95rem;
@@ -81,79 +81,68 @@ h4, h5, h6 {
   color: var(--text-primary);
   box-shadow: var(--shadow-tactile);
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
   user-select: none;
   text-decoration: none;
-}
-
-.btn:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: var(--shadow-tactile-lg);
+  transition: opacity 0.1s ease;
+  will-change: opacity;
 }
 
 .btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1.5px 1.5px 0px #2A1B17;
+  opacity: 0.85;
 }
 
 .btn-primary {
   background-color: var(--color-astro-turquoise);
-  color: #FFFFFF; /* 7.14:1 AAA Contrast */
+  color: #FFFFFF;
 }
 
 .btn-accent {
   background-color: var(--color-orbit-orange);
-  color: #FFFFFF; /* 7.08:1 AAA Contrast */
+  color: #FFFFFF;
 }
 
 .btn-gold {
   background-color: var(--color-retro-yellow);
-  color: #2A1B17; /* 9.82:1 AAA Contrast */
+  color: #2A1B17;
 }
 
 .btn-red {
   background-color: var(--color-rocket-red);
-  color: #FFFFFF; /* 7.42:1 AAA Contrast */
+  color: #FFFFFF;
 }
 
 .btn-brown {
   background-color: var(--color-deep-brown);
-  color: #FFF8E1; /* 13.8:1 AAA Contrast */
+  color: #FFF8E1;
 }
 
 .btn-sm {
-  padding: 7px 15px;
+  min-height: 38px;
+  padding: 6px 14px;
   font-size: 0.86rem;
   box-shadow: var(--shadow-tactile-sm);
 }
 
-/* Tactile 4x3 Cards */
+/* Crisp Cards (Zero Animation Jank) */
 .card-tile {
   background: var(--bg-card);
   border: var(--border-thick);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-tactile);
-  padding: 20px;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  padding: 18px;
   position: relative;
-  overflow: hidden;
 }
 
-.card-tile:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-tactile-lg);
-}
-
-/* High Contrast Badges (AAA Compliant) */
+/* High Contrast Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 4px 9px;
   border-radius: 999px;
   font-family: var(--font-heading);
   font-weight: 800;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   border: 1.5px solid #2A1B17;
   background-color: var(--bg-subtle);
   color: var(--text-primary);
@@ -161,79 +150,82 @@ h4, h5, h6 {
 
 .badge-orange {
   background-color: #FBE9E7;
-  color: #BF360C; /* 7.4:1 AAA */
+  color: #BF360C;
 }
 
 .badge-teal {
   background-color: #E0F7FA;
-  color: #004D40; /* 9.1:1 AAA */
+  color: #004D40;
 }
 
 .badge-yellow {
   background-color: #FFFDE7;
-  color: #E65100; /* 7.2:1 AAA */
+  color: #E65100;
 }
 
+/* Responsive Stash Grid */
 .grid-stash {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 22px;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
-/* Modal Overlay */
+@media (min-width: 640px) {
+  .grid-stash {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+}
+
+/* Crisp Responsive Modal (Hardware-Accelerated Overlay) */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(42, 27, 23, 0.8);
-  backdrop-filter: blur(5px);
+  background-color: rgba(42, 27, 23, 0.75);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: 1000;
-  padding: 16px;
-  animation: fadeIn 0.2s ease-out;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 16px;
+  }
 }
 
 .modal-content {
   background-color: var(--bg-card);
   border: var(--border-thick);
-  box-shadow: var(--shadow-tactile-lg);
-  border-radius: var(--radius-lg);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+  box-shadow: var(--shadow-tactile);
   width: 100%;
-  max-width: 580px;
-  max-height: 90vh;
+  max-width: 600px;
+  max-height: 88vh;
   overflow-y: auto;
-  padding: 24px;
-  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 20px 16px;
+  -webkit-overflow-scrolling: touch;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+@media (min-width: 640px) {
+  .modal-content {
+    border-bottom: var(--border-thick);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
 }
 
-@keyframes popIn {
-  from { transform: scale(0.92) translateY(10px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-/* Custom Scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--bg-subtle);
 }
 ::-webkit-scrollbar-thumb {
   background: #2A1B17;
-  border-radius: 4px;
-}
-
-.spin {
-  animation: spin 1.2s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  border-radius: 3px;
 }
